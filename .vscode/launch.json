@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Main",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--train",
+                "--base",
+                "configs/stableSRNew/v2-finetune_text_T_128-128.yaml",
+                "--gpus",
+                "2,3,4,7",
+                "--name",
+                "SFT",
+                "--scale_lr",
+                "False",
+                "--debug",
+                "True"
+            ],
+            "justMyCode": true,
+            "python": "${command:python.interpreterPath}"
+        }
+    ]
+}

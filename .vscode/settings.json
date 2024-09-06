@@ -1,0 +1,11 @@
+{
+    "python.envFile": "$(workspace)/.env",
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell",
+            "args": ["-NoExit", "-Command", "conda activate stableSR"]
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell"
+}
