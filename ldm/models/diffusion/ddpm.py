@@ -1678,11 +1678,13 @@ class LatentDiffusionSRTextWT(DDPM):
         self.ori_timesteps = list(use_timesteps)
         self.ori_timesteps.sort()
 
+    #条件时间步数调度: 生成一个时间步数的调度表，用于条件生成。
     def make_cond_schedule(self, ):
         self.cond_ids = torch.full(size=(self.num_timesteps,), fill_value=self.num_timesteps - 1, dtype=torch.long)
         ids = torch.round(torch.linspace(0, self.num_timesteps - 1, self.num_timesteps_cond)).long()
         self.cond_ids[:self.num_timesteps_cond] = ids
 
+    #标准差缩放: 在训练开始时，根据编码的标准差调整缩放因子。
     @rank_zero_only
     @torch.no_grad()
     def on_train_batch_start(self, batch, batch_idx, dataloader_idx):
@@ -1700,6 +1702,7 @@ class LatentDiffusionSRTextWT(DDPM):
             print(f"setting self.scale_factor to {self.scale_factor}")
             print("### USING STD-RESCALING ###")
 
+    #调度注册: 注册扩散模型的调度计划，并根据条件时间步数调度表进行调整。
     def register_schedule(self,
                           given_betas=None, beta_schedule="linear", timesteps=1000,
                           linear_start=1e-4, linear_end=2e-2, cosine_s=8e-3):
@@ -2350,6 +2353,7 @@ class LatentDiffusionSRTextWT(DDPM):
         return loss
 
     def forward(self, x, c, gt, *args, **kwargs):
+        #随机选择时间步数
         index = np.random.randint(0, self.num_timesteps, size=x.size(0))
         t = torch.from_numpy(index)
         t = t.to(self.device).long()
@@ -2384,7 +2388,7 @@ class LatentDiffusionSRTextWT(DDPM):
         return [rescale_bbox(b) for b in bboxes]
 
     def apply_model(self, x_noisy, t, cond, struct_cond, return_ids=False):
-
+        #如果 cond 是一个字典，则直接使用；否则，将其转换为字典格式，并根据 self.model.conditioning_key 确定键名。
         if isinstance(cond, dict):
             # hybrid case, cond is exptected to be a dict
             pass
@@ -2394,6 +2398,7 @@ class LatentDiffusionSRTextWT(DDPM):
             key = 'c_concat' if self.model.conditioning_key == 'concat' else 'c_crossattn'
             cond = {key: cond}
 
+        #如果模型有 split_input_params 属性，则对输入图像进行分割处理。使用 unfold 方法将图像分割成多个小块，并将其存储在 z_list 中
         if hasattr(self, "split_input_params"):
             assert len(cond) == 1  # todo can only deal with one conditioning atm
             assert not return_ids
@@ -2409,6 +2414,7 @@ class LatentDiffusionSRTextWT(DDPM):
             z = z.view((z.shape[0], -1, ks[0], ks[1], z.shape[-1]))  # (bn, nc, ks[0], ks[1], L )
             z_list = [z[:, :, :, :, i] for i in range(z.shape[-1])]
 
+        # 根据 self.cond_stage_key 的不同，生成不同的条件列表 cond_list。对于不同的条件类型（如图像、分割、边界框等），生成相应的条件列表。
             if self.cond_stage_key in ["image", "LR_image", "segmentation",
                                        'bbox_img'] and self.model.conditioning_key:  # todo check for completeness
                 c_key = next(iter(cond.keys()))  # get key
@@ -2506,6 +2512,7 @@ class LatentDiffusionSRTextWT(DDPM):
         return mean_flat(kl_prior) / np.log(2.0)
 
     def p_losses(self, x_start, cond, struct_cond, t, t_ori, z_gt, noise=None):
+        #前向过程
         noise = default(noise, lambda: torch.randn_like(x_start))
         x_noisy = self.q_sample(x_start=x_start, t=t, noise=noise)
 

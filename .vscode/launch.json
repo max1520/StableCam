@@ -22,6 +22,26 @@
             ],
             "justMyCode": true,
             "python": "${command:python.interpreterPath}"
+        },
+
+        {
+            "name": "Python: Generate VQGAN Data",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/generate_vqgan_data.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config", "configs/stableSRdata/test_data_pairs.yaml",
+                "--ckpt", "D:\\cqy\\StableSR-main/logs/2024-09-04T19-40-33_SFT_2/checkpoints/last.ckpt",
+                "--skip_grid",
+                "--ddpm_steps", "200",
+                "--base_i", "0",
+                "--seed", "10000"
+            ],
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "3"
+            }
         }
+
     ]
 }

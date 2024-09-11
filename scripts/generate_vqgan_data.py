@@ -1,6 +1,7 @@
 """For generating the data for training VQGAN, No polishing"""
 
 import argparse, os, sys, glob
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 import PIL
 import torch
 import numpy as np
@@ -27,6 +28,7 @@ from basicsr.utils import DiffJPEG
 from basicsr.data.realesrgan_dataset import RealESRGANDataset
 from torch.utils.data import random_split, DataLoader, Dataset, Subset
 
+#计算特征图的均值和标准差，用于自适应实例归一化。
 def calc_mean_std(feat, eps=1e-5):
     """Calculate mean and std for adaptive_instance_normalization.
     Args:
@@ -42,6 +44,7 @@ def calc_mean_std(feat, eps=1e-5):
     feat_mean = feat.view(b, c, -1).mean(dim=2).view(b, c, 1, 1)
     return feat_mean, feat_std
 
+#自适应实例归一化，调整参考特征以匹配降级特征的颜色和光照
 def adaptive_instance_normalization(content_feat, style_feat):
     """Adaptive instance normalization.
     Adjust the reference features to have the similar color and illuminations
@@ -56,6 +59,7 @@ def adaptive_instance_normalization(content_feat, style_feat):
     normalized_feat = (content_feat - content_mean.expand(size)) / content_std.expand(size)
     return normalized_feat * style_std.expand(size) + style_mean.expand(size)
 
+#从原始扩散过程中创建一个时间步列表，用于采样。
 def space_timesteps(num_timesteps, section_counts):
     """
     Create a list of timesteps to use from an original diffusion process,
@@ -111,6 +115,7 @@ def space_timesteps(num_timesteps, section_counts):
         start_idx += size
     return set(all_steps)
 
+#将一个迭代器分块为指定大小的块。
 def chunk(it, size):
     it = iter(it)
     return iter(lambda: tuple(islice(it, size)), ())
@@ -302,7 +307,8 @@ def main():
     config = OmegaConf.load(f"{opt.config}")
     model = load_model_from_config(config, f"{opt.ckpt}")
 
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    # device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    device = torch.device("cuda")
     model = model.to(device)
 
     if opt.plms:
