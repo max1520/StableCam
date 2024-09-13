@@ -1,7 +1,6 @@
 """For generating the data for training VQGAN, No polishing"""
 
 import argparse, os, sys, glob
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 import PIL
 import torch
 import numpy as np
@@ -26,6 +25,7 @@ import copy
 
 from basicsr.utils import DiffJPEG
 from basicsr.data.realesrgan_dataset import RealESRGANDataset
+from basicsr.data.realesrgan_paired_dataset import RealESRGANPairedDataset
 from torch.utils.data import random_split, DataLoader, Dataset, Subset
 
 #计算特征图的均值和标准差，用于自适应实例归一化。
@@ -335,7 +335,7 @@ def main():
     base_i = opt.base_i
 
     # data
-    dataset = RealESRGANDataset(config.test_data.params.test.params)
+    dataset = RealESRGANPairedDataset(config.data.params.train.params)
     test_dataloader = DataLoader(
         dataset,
         batch_size=config.test_data.params.batch_size,

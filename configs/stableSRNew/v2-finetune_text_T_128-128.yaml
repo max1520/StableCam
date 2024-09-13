@@ -19,7 +19,7 @@ model:
     scale_factor: 0.18215
     use_ema: False
     # for training only
-    ckpt_path: D:\cqy\StableSR-main\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
+    ckpt_path: D:\cqy\StableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
     unfrozen_diff: False
     random_size: False
     time_replace: 1000
@@ -52,7 +52,7 @@ model:
       target: ldm.models.autoencoder.AutoencoderKL
       params:
         # for training only
-        ckpt_path: D:\cqy\StableSR-main\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
+        ckpt_path: D:\cqy\StableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
         embed_dim: 4
         monitor: val/rec_loss
         ddconfig:
@@ -128,7 +128,7 @@ degradation:
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 1
+    batch_size: 8
     num_workers: 6
     wrap: false
     train:
@@ -249,3 +249,7 @@ lightning:
     benchmark: True
     max_steps: 800000
     accumulate_grad_batches: 4
+#    limit_train_batches: 1
+#    limit_test_batches: 1
+#    limit_val_batches: 1
+

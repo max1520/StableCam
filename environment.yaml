@@ -1,13 +1,12 @@
-name: stablesr
+name: stableSR-cp10
 channels:
   - pytorch
   - defaults
 dependencies:
-  - python=3.9
+  - python=3.10
   - pip=24.2
-  - cudatoolkit=10.2
-  - pytorch=1.12.1
-  - torchvision=0.13.1
+  - pytorch=1.13.1
+  - torchvision=0.14.1
   - numpy=1.23.1
   - pip:
     - albumentations==1.3.0
@@ -26,7 +25,6 @@ dependencies:
     - invisible-watermark>=0.1.5
     - streamlit-drawable-canvas==0.8.0
     - torchmetrics==0.6.0
-    - triton
     - matplotlib
     - wandb
     - pillow

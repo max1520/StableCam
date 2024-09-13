@@ -18,7 +18,7 @@ model:
     monitor: val/loss_simple_ema
     scale_factor: 0.18215
     use_ema: False
-    # ckpt_path: D:\cqy\StableSR-main/logs\2024-09-04T19-40-33_SFT_2\checkpoints\last.ckpt
+    ckpt_path: D:\cqy\StableSR/logs\last.ckpt
     unfrozen_diff: False
     random_size: False
     time_replace: 1000
@@ -50,7 +50,7 @@ model:
     first_stage_config:
       target: ldm.models.autoencoder.AutoencoderKL
       params:
-        ckpt_path: D:\cqy\StableSR-main/logs\2024-09-04T19-40-33_SFT_2\checkpoints\last.ckpt
+        ckpt_path: D:\cqy\StableSR/logs\last.ckpt
         embed_dim: 4
         monitor: val/rec_loss
         ddconfig:

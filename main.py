@@ -23,7 +23,8 @@ from ldm.util import instantiate_from_config, instantiate_from_config_sr
 from pytorch_lightning.loggers import WandbLogger
 
 import warnings
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=UserWarning, module="torchvision.transforms.functional_tensor")
+
 def get_parser(**parser_kwargs):
     def str2bool(v):
         if isinstance(v, bool):
@@ -484,7 +485,7 @@ if __name__ == "__main__":
         if not os.path.exists(opt.resume):
             raise ValueError("Cannot find {}".format(opt.resume))
         if os.path.isfile(opt.resume):
-            paths = opt.resume.split("/")
+            paths = opt.resume.replace("\\", "/").split("/")
             # idx = len(paths)-paths[::-1].index("logs")+1
             # logdir = "/".join(paths[:idx])
             logdir = "/".join(paths[:-2])
