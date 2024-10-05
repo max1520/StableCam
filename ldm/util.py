@@ -82,6 +82,7 @@ def instantiate_from_config(config):
         elif config == "__is_unconditional__":
             return None
         raise KeyError("Expected key `target` to instantiate.")
+    # ** 操作符将 config.get("params", dict()) 的结果（一个字典）解包为关键字参数，并传递给前面的函数或类。
     return get_obj_from_str(config["target"])(**config.get("params", dict()))
 
 def instantiate_from_config_sr(config):

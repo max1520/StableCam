@@ -1,6 +1,6 @@
 sf: 4
 model:
-  base_learning_rate: 2.0e-06
+  base_learning_rate: 5.0e-05
   target: ldm.models.diffusion.ddpm.LatentDiffusionSRTextWT
   params:
     # parameterization: "v"
@@ -18,15 +18,16 @@ model:
     monitor: val/loss_simple_ema
     scale_factor: 0.18215
     use_ema: False
-    ckpt_path: D:\cqy\stableSR\logs\2024-09-08T20-13-54_SFT_3090\checkpoints\last.ckpt
+    # for training only
+    ckpt_path: D:\cqy\StableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
     unfrozen_diff: False
     random_size: False
     time_replace: 1000
     use_usm: True
-    # test_gt: True
-    #P2 weighting
+    #P2 weighting, we do not use in final version
     p2_gamma: ~
     p2_k: ~
+    # ignore_keys: []
 
     unet_config:
       target: ldm.modules.diffusionmodules.openaimodel.UNetModelDualcondV2
@@ -50,7 +51,8 @@ model:
     first_stage_config:
       target: ldm.models.autoencoder.AutoencoderKL
       params:
-        ckpt_path: D:\cqy\stableSR\logs\2024-09-08T20-13-54_SFT_3090\checkpoints\last.ckpt
+        # for training only
+        ckpt_path: D:\cqy\StableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
         embed_dim: 4
         monitor: val/rec_loss
         ddconfig:
@@ -121,20 +123,22 @@ degradation:
   jpeg_range2: [60, 100]
 
   gt_size: 512
+  no_degradation_prob: 0.01
 
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 4
+    batch_size: 8
     num_workers: 6
     wrap: false
     train:
-      target: basicsr.data.realesrgan_dataset.RealESRGANPairedDataset
+      target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
+        phase: train
         queue_size: 180
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/inter_512'
-        num_face: 2000
+        dataroot_gt: 'D:/cqy/flat_data/image1k_512_debug/label_512'
+        dataroot_lq: 'D:/cqy/flat_data/image1k_512_debug/inter_512'
+
         crop_size: 512
         io_backend:
           type: disk
@@ -161,10 +165,11 @@ data:
         use_hflip: True
         use_rot: False
     validation:
-      target: basicsr.data.realesrgan_dataset.RealESRGANPairedDataset
+      target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_512'
+        phase: validation
+        dataroot_gt: 'D:/cqy/flat_data/image1k_512_debug/eval_label_512'
+        dataroot_lq: 'D:/cqy/flat_data/image1k_512_debug/eval_inter_512'
         crop_size: 512
         io_backend:
           type: disk
@@ -194,17 +199,15 @@ data:
 test_data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 6
+    batch_size: 1
     num_workers: 6
     wrap: false
     test:
-      target: basicsr.data.realesrgan_dataset.RealESRGANPairedDataset
+      target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_512'
-        num_face: 2000
+        dataroot_gt: 'D:/cqy/flat_data/image1k_512_debug/eval_label_512'
+        dataroot_lq: 'D:/cqy/flat_data/image1k_512_debug/eval_inter_512'
         crop_size: 512
-        mul_num: 10
         io_backend:
           type: disk
 
@@ -233,15 +236,20 @@ test_data:
 lightning:
   modelcheckpoint:
     params:
-      every_n_train_steps: 5000
+      every_n_train_steps: 1500
   callbacks:
     image_logger:
       target: main.ImageLogger
       params:
-        batch_frequency: 5000
+        batch_frequency: 1500
         max_images: 4
         increase_log_steps: False
 
   trainer:
     benchmark: True
     max_steps: 800000
+    accumulate_grad_batches: 4
+    limit_train_batches: 1
+    limit_test_batches: 1
+    limit_val_batches: 1
+

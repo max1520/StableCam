@@ -532,13 +532,13 @@ if __name__ == "__main__":
     # init and save configs
     configs = [OmegaConf.load(cfg) for cfg in opt.base]
     cli = OmegaConf.from_dotlist(unknown)
-    config = OmegaConf.merge(*configs, cli)
+    config = OmegaConf.merge(*configs, cli) #后面的配置对象会覆盖前面的配置对象中的相同键的值
     lightning_config = config.pop("lightning", OmegaConf.create())
     # merge trainer cli with config
     trainer_config = lightning_config.get("trainer", OmegaConf.create())
     # default to ddp
     trainer_config["accelerator"] = "dp"
-    for k in nondefault_trainer_args(opt):
+    for k in nondefault_trainer_args(opt): #从 opt 对象中提取出与Trainer默认值不同的训练器参数
         trainer_config[k] = getattr(opt, k)
     if not "gpus" in trainer_config:
         del trainer_config["accelerator"]
@@ -547,7 +547,7 @@ if __name__ == "__main__":
         gpuinfo = trainer_config["gpus"]
         print(f"Running on GPUs {gpuinfo}")
         cpu = False
-    trainer_opt = argparse.Namespace(**trainer_config)
+    trainer_opt = argparse.Namespace(**trainer_config)  #**字典解包操作
     lightning_config.trainer = trainer_config
 
     # model
@@ -606,7 +606,7 @@ if __name__ == "__main__":
     if "modelcheckpoint" in lightning_config:
         modelckpt_cfg = lightning_config.modelcheckpoint
     else:
-        modelckpt_cfg =  OmegaConf.create()
+        modelckpt_cfg = OmegaConf.create()
     modelckpt_cfg = OmegaConf.merge(default_modelckpt_cfg, modelckpt_cfg)
     print(f"Merged modelckpt-cfg: \n{modelckpt_cfg}")
     if version.parse(pl.__version__) < version.parse('1.4.0'):
