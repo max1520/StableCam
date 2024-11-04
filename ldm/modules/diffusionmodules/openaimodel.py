@@ -1539,3 +1539,51 @@ class EncoderUNetModelWT(nn.Module):
             results[str(result_list[i].size(-1))] = self.fea_tran[i](result_list[i], emb)
 
         return results
+
+if __name__ == '__main__':
+    device = torch.device('cuda')
+    encoderunetmodelWT = EncoderUNetModelWT(
+        image_size=96,
+        in_channels=4,
+        model_channels=256,
+        out_channels=256,
+        num_res_blocks=2,
+        attention_resolutions=[4, 2, 1],
+        dropout=0,
+        channel_mult=(1, 1, 2, 2),
+        conv_resample=True,
+        dims=2,
+        use_checkpoint=False,
+        use_fp16=False,
+        num_heads=4,
+        num_head_channels=-1,
+        num_heads_upsample=-1,
+        use_scale_shift_norm=False,
+        resblock_updown=False,
+        use_new_attention_order=False
+    ).to(device)
+
+    unetmodeldualcondv2 = UNetModelDualcondV2(
+        image_size=32,  # 未使用
+        in_channels=4,
+        out_channels=4,
+        model_channels=320,
+        attention_resolutions=[4, 2, 1],
+        num_res_blocks=2,
+        channel_mult=[1, 2, 4, 4],
+        num_head_channels=64,
+        use_spatial_transformer=True,
+        use_linear_in_transformer=True,
+        transformer_depth=1,
+        context_dim=1024,
+        use_checkpoint=False,
+        legacy=False,
+        semb_channels=256
+    ).to(device)
+
+    x = torch.randn(2,4,64,64).to(device)
+    timesteps = torch.randn(2,).to(device)
+    context = x = torch.randn(2,4,512,512).to(device)
+    struct = encoderunetmodelWT(x, timesteps)
+    y = unetmodeldualcondv2(x, timesteps, context=context, struct_cond=struct)
+    print(y)

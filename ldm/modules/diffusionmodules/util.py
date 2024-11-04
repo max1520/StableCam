@@ -156,6 +156,7 @@ def timestep_embedding(timesteps, dim, max_period=10000, repeat_only=False):
     :param dim: the dimension of the output.
     :param max_period: controls the minimum frequency of the embeddings.
     :return: an [N x dim] Tensor of positional embeddings.
+    正弦编码
     """
     if not repeat_only:
         half = dim // 2

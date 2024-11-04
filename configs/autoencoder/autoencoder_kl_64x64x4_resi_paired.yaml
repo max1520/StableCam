@@ -3,7 +3,7 @@ model:
   target: ldm.models.autoencoder.AutoencoderKLResi
   params:
     # for training only
-    ckpt_path: D:\cqy\stableSR\logs\2024-09-08T20-13-54_SFT_3090\checkpoints\last.ckpt
+    ckpt_path: D:\cqy\stableSR\logs\2024-10-10T15-15-02_SFT_256-512\checkpoints\last.ckpt
     monitor: "val/rec_loss"
     embed_dim: 4
     fusion_w: 0.5
@@ -45,13 +45,13 @@ data:
     train:
       target: basicsr.data.single_image_dataset.SingleImageNPDataset
       params:
-        gt_path: ['D:/cqy/stableSR/outputs/sr-samples/']
+        gt_path: ['D:/cqy/stableSR/outputs/sr-samples_256-512/']
         io_backend:
           type: disk
     validation:
       target: basicsr.data.single_image_dataset.SingleImageNPDataset
       params:
-        gt_path: ['D:/cqy/stableSR/outputs/sr-samples/']
+        gt_path: ['D:/cqy/stableSR/outputs/sr-samples_256-512/']
         io_backend:
           type: disk
 
