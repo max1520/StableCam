@@ -19,14 +19,16 @@ model:
     scale_factor: 0.18215
     use_ema: False
     # for training only
-    ckpt_path: D:\cqy\StableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
+    ckpt_path: D:\cqy\stableSR\logs\2024-10-10T15-15-02_Tik_SFT_256-512\checkpoints\last.ckpt
     unfrozen_diff: False
     random_size: False
     time_replace: 1000
-    use_usm: True
+    use_usm: False
     #P2 weighting, we do not use in final version
     p2_gamma: ~
     p2_k: ~
+    # trainable_camera_inversion
+    is_trainable_camera_inversion: False
     # ignore_keys: []
 
     unet_config:
@@ -52,7 +54,7 @@ model:
       target: ldm.models.autoencoder.AutoencoderKL
       params:
         # for training only
-        ckpt_path: D:\cqy\StableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
+        ckpt_path: D:\cqy\stableSR\logs\2024-10-10T15-15-02_Tik_SFT_256-512\checkpoints\last.ckpt
         embed_dim: 4
         monitor: val/rec_loss
         ddconfig:
@@ -101,6 +103,11 @@ model:
         resblock_updown: False
         use_new_attention_order: False
 
+    TrainableCameraInversion_stage_config:
+      target: ldm.modules.trainable_camera_inversion.amplitude.TrainableCameraInversion
+      params:
+        initial_mode: calibration
+
 
 degradation:
   # the first degradation process
@@ -137,7 +144,7 @@ data:
         phase: train
         queue_size: 180
         dataroot_gt: 'D:/cqy/flat_data/image1k_512/label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/inter_512'
+        dataroot_lq: 'D:/cqy/flat_data/image1k_512/inter_256-512'
 
         crop_size: 512
         io_backend:
@@ -169,7 +176,7 @@ data:
       params:
         phase: validation
         dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_512'
+        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_256-512'
         crop_size: 512
         io_backend:
           type: disk
@@ -206,7 +213,7 @@ test_data:
       target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
         dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_512'
+        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_256-512'
         crop_size: 512
         io_backend:
           type: disk
@@ -241,9 +248,12 @@ lightning:
     image_logger:
       target: main.ImageLogger
       params:
-        batch_frequency: 1500
+        batch_frequency: 500
         max_images: 4
         increase_log_steps: False
+        log_first_step: False
+        log_on_batch_idx: True
+        log_every_n_epochs: 5
 
   trainer:
     benchmark: True

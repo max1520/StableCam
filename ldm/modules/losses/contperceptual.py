@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 
 from taming.modules.losses.vqperceptual import *  # TODO: taming dependency yes/no?
-
+from pytorch_msssim import ssim, ms_ssim, SSIM, MS_SSIM
 
 class LPIPSWithDiscriminator(nn.Module):
-    def __init__(self, disc_start, logvar_init=0.0, kl_weight=1.0, pixelloss_weight=1.0,
-                 disc_num_layers=3, disc_in_channels=3, disc_factor=1.0, disc_weight=1.0,
+    def __init__(self, disc_start, logvar_init=0.0, kl_weight=0, pixelloss_weight=1.0,
+                 disc_num_layers=3, disc_in_channels=3, disc_factor=1.0, disc_weight=0.025,
                  perceptual_weight=1.0, use_actnorm=False, disc_conditional=False,
                  disc_loss="hinge"):
 
@@ -29,6 +29,7 @@ class LPIPSWithDiscriminator(nn.Module):
         self.discriminator_weight = disc_weight
         self.disc_conditional = disc_conditional
 
+
     def calculate_adaptive_weight(self, nll_loss, g_loss, last_layer=None):
         if last_layer is not None:
             nll_grads = torch.autograd.grad(nll_loss, last_layer, retain_graph=True)[0]
@@ -45,10 +46,14 @@ class LPIPSWithDiscriminator(nn.Module):
     def forward(self, inputs, reconstructions, posteriors, optimizer_idx,
                 global_step, last_layer=None, cond=None, split="train",
                 weights=None, return_dic=False):
-        rec_loss = torch.abs(inputs.contiguous() - reconstructions.contiguous())
+        rec_loss = torch.square(inputs.contiguous() - reconstructions.contiguous()) #L2 loss
         if self.perceptual_weight > 0:
             p_loss = self.perceptual_loss(inputs.contiguous(), reconstructions.contiguous())
             rec_loss = rec_loss + self.perceptual_weight * p_loss
+
+        inputs_0_1 = (inputs + 1) / 2  # [-1, 1] => [0, 1]
+        reconstructions_0_1 = (reconstructions + 1) / 2
+        ssim_loss = 1 - ssim(inputs_0_1.contiguous(), reconstructions_0_1.contiguous(), data_range=1, size_average=False)
 
         nll_loss = rec_loss / torch.exp(self.logvar) + self.logvar
         weighted_nll_loss = nll_loss
@@ -102,10 +107,11 @@ class LPIPSWithDiscriminator(nn.Module):
                     loss_dic['disc_factor'] = torch.tensor(disc_factor)
                     loss_dic['g_loss'] = g_loss.detach().mean()
             else:
-                loss = weighted_nll_loss + d_weight * disc_factor * g_loss
+                loss = weighted_nll_loss + d_weight * disc_factor * g_loss + ssim_loss  #TODO:ssim_loss's weight
                 log = {"{}/total_loss".format(split): loss.clone().detach().mean(), "{}/logvar".format(split): self.logvar.detach(),
                        "{}/nll_loss".format(split): nll_loss.detach().mean(),
                        "{}/rec_loss".format(split): rec_loss.detach().mean(),
+                       "{}/ssim_loss".format(split): ssim_loss.detach(),
                        "{}/d_weight".format(split): d_weight.detach(),
                        "{}/disc_factor".format(split): torch.tensor(disc_factor),
                        "{}/g_loss".format(split): g_loss.detach().mean(),

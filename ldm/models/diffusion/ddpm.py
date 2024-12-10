@@ -39,6 +39,10 @@ import cv2
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
+import scipy.io as sio
+from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import peak_signal_noise_ratio as psnr
+
 __conditioning_keys__ = {'concat': 'c_concat',
                          'crossattn': 'c_crossattn',
                          'adm': 'y'}
@@ -493,6 +497,11 @@ class DDPM(pl.LightningModule):
         if self.use_scheduler:
             lr = self.optimizers().param_groups[0]['lr']
             self.log('lr_abs', lr, prog_bar=True, logger=True, on_step=True, on_epoch=False)
+
+        if self.is_trainable_camera_inversion == True:
+            for name, param in self.TrainableCameraInversion_stage_model.named_parameters():
+                if "PhiL" in name:  # 筛选包含 "PhiL" 的参数
+                    print(f"{name}: requires_grad={param.requires_grad}, grad={param.grad}")
 
         return loss
 
@@ -1566,6 +1575,7 @@ class LatentDiffusionSRTextWT(DDPM):
                  first_stage_config,
                  cond_stage_config,
                  structcond_stage_config,
+                 TrainableCameraInversion_stage_config,
                  num_timesteps_cond=None,
                  cond_stage_key="image",
                  cond_stage_trainable=False,
@@ -1582,6 +1592,7 @@ class LatentDiffusionSRTextWT(DDPM):
                  time_replace=None,
                  use_usm=False,
                  mix_ratio=0.0,
+                 is_trainable_camera_inversion=False,
                  *args, **kwargs):
         # put this in your init
         self.num_timesteps_cond = default(num_timesteps_cond, 1)
@@ -1601,6 +1612,7 @@ class LatentDiffusionSRTextWT(DDPM):
         ckpt_path = kwargs.pop("ckpt_path", None)
         ignore_keys = kwargs.pop("ignore_keys", [])
         super().__init__(conditioning_key=conditioning_key, *args, **kwargs)
+        self.is_trainable_camera_inversion = is_trainable_camera_inversion
         self.concat_mode = concat_mode
         self.cond_stage_trainable = cond_stage_trainable
         self.cond_stage_key = cond_stage_key
@@ -1615,6 +1627,8 @@ class LatentDiffusionSRTextWT(DDPM):
         self.instantiate_first_stage(first_stage_config)
         self.instantiate_cond_stage(cond_stage_config)
         self.instantiate_structcond_stage(structcond_stage_config)
+        if self.is_trainable_camera_inversion:
+            self.instantiate_TrainableCameraInversion_stage(TrainableCameraInversion_stage_config)
         self.cond_stage_forward = cond_stage_forward
         self.clip_denoised = False
         self.bbox_tokenizer = None
@@ -1712,12 +1726,37 @@ class LatentDiffusionSRTextWT(DDPM):
         if self.shorten_cond_schedule:
             self.make_cond_schedule()
 
+    def load_state_dict(self, state_dict, strict=None):
+        # 判断 self.is_trainable_camera_inversion 的值
+        if self.is_trainable_camera_inversion:
+            # 如果是 True，则传递 strict=False
+            strict = False
+        elif strict is None:
+            # 如果 strict 参数为 None，则使用父类的默认值
+            strict = True  # 默认严格加载
+
+        return super().load_state_dict(state_dict, strict)
+
+    # def on_load_checkpoint(self, checkpoint):
+    #     # 检查优化器状态
+    #     if "optimizer_states" in checkpoint:
+    #         opt_state = checkpoint["optimizer_states"][0]
+    #         try:
+    #             # 获取当前优化器
+    #             optimizer = self.trainer.optimizers[0]
+    #
+    #             # 直接尝试加载优化器状态，如果不匹配则捕获异常
+    #             optimizer.load_state_dict(opt_state)
+    #         except Exception as e:
+    #             print(f"Failed to load optimizer state: {e}. Ignoring optimizer state.")
+
     def instantiate_first_stage(self, config):
         model = instantiate_from_config(config)
         self.first_stage_model = model.eval()
         self.first_stage_model.train = disabled_train
         for param in self.first_stage_model.parameters():
             param.requires_grad = False
+
 
     def instantiate_cond_stage(self, config):
         if not self.cond_stage_trainable:
@@ -1746,6 +1785,11 @@ class LatentDiffusionSRTextWT(DDPM):
         model = instantiate_from_config(config)
         self.structcond_stage_model = model
         self.structcond_stage_model.train()
+
+    def instantiate_TrainableCameraInversion_stage(self, config):
+        model = instantiate_from_config(config)
+        self.TrainableCameraInversion_stage_model = model
+        self.TrainableCameraInversion_stage_model.train()
 
     def _get_denoise_row_from_list(self, samples, desc='', force_no_decoder_quantization=False):
         denoise_row = []
@@ -1921,22 +1965,26 @@ class LatentDiffusionSRTextWT(DDPM):
         assert lq.size(-1)>=64
         assert lq.size(-2)>=64
         return [lq, gt]
-    
-    @torch.no_grad()
+
     def get_input(self, batch, k=None, return_first_stage_outputs=False, force_c_encode=False,
-              cond_key=None, return_original_cond=False, bs=None, val=False, text_cond=[''], return_gt=False, resize_lq=True):
+              cond_key=None, return_original_cond=False, bs=None, val=False, text_cond=[''], return_gt=False, resize_lq=False):
         if not hasattr(self, 'usm_sharpener'):
             usm_sharpener = USMSharp().cuda()  # do usm sharpening
 
         im_gt = batch['gt'].cuda()
         if self.use_usm:
-            im_gt = usm_sharpener(im_gt)
+            with torch.no_grad():
+                im_gt = usm_sharpener(im_gt)
 
         im_lq = batch['lq'].cuda()
 
         # Ensure the images are in the correct format
         im_gt = im_gt.to(memory_format=torch.contiguous_format).float()
         im_lq = im_lq.to(memory_format=torch.contiguous_format).float()
+
+        if self.is_trainable_camera_inversion:
+            # Ensure this step can track gradients
+            im_lq = self.TrainableCameraInversion_stage_model(im_lq)  # Allow gradients here
 
         # Optionally resize lq to match gt size
         if resize_lq:
@@ -1954,12 +2002,13 @@ class LatentDiffusionSRTextWT(DDPM):
         im_gt = im_gt * 2 - 1.0
         im_lq = im_lq * 2 - 1.0
 
-        # Encode lq and gt
-        encoder_posterior_lq = self.encode_first_stage(im_lq)
-        z_lq = self.get_first_stage_encoding(encoder_posterior_lq).detach()
+        with torch.no_grad():
+            # Encode lq and gt
+            encoder_posterior_lq = self.encode_first_stage(im_lq)
+            z_lq = self.get_first_stage_encoding(encoder_posterior_lq)
 
-        encoder_posterior_gt = self.encode_first_stage(im_gt)
-        z_gt = self.get_first_stage_encoding(encoder_posterior_gt).detach()
+            encoder_posterior_gt = self.encode_first_stage(im_gt)
+            z_gt = self.get_first_stage_encoding(encoder_posterior_gt)
 
         # Prepare text conditions
         while len(text_cond) < z_lq.size(0):
@@ -1973,7 +2022,8 @@ class LatentDiffusionSRTextWT(DDPM):
         out.append(z_gt)
 
         if return_first_stage_outputs:
-            xrec = self.decode_first_stage(z_gt)
+            with torch.no_grad():
+                xrec = self.decode_first_stage(z_gt)
             out.extend([im_lq, im_gt, xrec])
         if return_original_cond:
             out.append(None)  # Assuming no original condition is provided
@@ -2353,7 +2403,7 @@ class LatentDiffusionSRTextWT(DDPM):
         return loss
 
     def forward(self, x, c, gt, *args, **kwargs):
-        #随机选择时间步数
+        #随机选择时间步数#
         index = np.random.randint(0, self.num_timesteps, size=x.size(0))
         t = torch.from_numpy(index)
         t = t.to(self.device).long()
@@ -2414,7 +2464,7 @@ class LatentDiffusionSRTextWT(DDPM):
             z = z.view((z.shape[0], -1, ks[0], ks[1], z.shape[-1]))  # (bn, nc, ks[0], ks[1], L )
             z_list = [z[:, :, :, :, i] for i in range(z.shape[-1])]
 
-        # 根据 self.cond_stage_key 的不同，生成不同的条件列表 cond_list。对于不同的条件类型（如图像、分割、边界框等），生成相应的条件列表。
+            # 根据 self.cond_stage_key 的不同，生成不同的条件列表 cond_list。对于不同的条件类型（如图像、分割、边界框等），生成相应的条件列表。
             if self.cond_stage_key in ["image", "LR_image", "segmentation",
                                        'bbox_img'] and self.model.conditioning_key:  # todo check for completeness
                 c_key = next(iter(cond.keys()))  # get key
@@ -2512,7 +2562,7 @@ class LatentDiffusionSRTextWT(DDPM):
         return mean_flat(kl_prior) / np.log(2.0)
 
     def p_losses(self, x_start, cond, struct_cond, t, t_ori, z_gt, noise=None):
-        #前向过程
+        #前向过程#
         noise = default(noise, lambda: torch.randn_like(x_start))
         x_noisy = self.q_sample(x_start=x_start, t=t, noise=noise)
 
@@ -3183,8 +3233,55 @@ class LatentDiffusionSRTextWT(DDPM):
 
         return samples, intermediates
 
-
     @torch.no_grad()
+    def log_metrics(self, batch, N=8, sample=True, **kwargs):
+        z, c_lq, z_gt, x, gt, yrec, xc = self.get_input(batch, self.first_stage_key,
+                                                        return_first_stage_outputs=True,
+                                                        force_c_encode=True,
+                                                        return_original_cond=True,
+                                                        bs=N, val=True)
+        # N = min(x.shape[0], N)
+        N = x.shape[0]
+        c = self.cond_stage_model(c_lq)
+        if self.test_gt:
+            struct_cond = z_gt
+        else:
+            struct_cond = z
+
+        if sample:
+            with self.ema_scope("Plotting"):
+                if self.time_replace is not None:
+                    cur_time_step=self.time_replace
+                else:
+                    cur_time_step = 1000
+
+                samples, z_denoise_row = self.sample(cond=c, struct_cond=struct_cond, batch_size=N, timesteps=cur_time_step, return_intermediates=True, time_replace=self.time_replace)
+            x_samples = self.decode_first_stage(samples)
+
+        #caculater metric
+        gt = torch.clamp((gt + 1.0) / 2.0, min=0.0, max=1.0)
+        x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
+        gt_channel1 = gt[:, 0, :, :].cpu().numpy()
+        x_samples_channel1 = x_samples[:, 0, :, :].cpu().numpy()
+        psnr_values = []
+        ssim_values = []
+        for i in range(gt_channel1.shape[0]):
+            ssim_value = ssim(gt_channel1[i], x_samples_channel1[i], data_range=1)
+            psnr_value = psnr(gt_channel1[i], x_samples_channel1[i], data_range=1)
+            ssim_values.append(ssim_value)
+            psnr_values.append(psnr_value)
+        # 计算平均 PSNR 和 SSIM
+        avg_ssim = sum(ssim_values) / len(ssim_values)
+        avg_psnr = sum(psnr_values) / len(psnr_values)
+
+        metric = {
+            'avg_psnr': avg_psnr,
+            'avg_ssim': avg_ssim
+        }
+
+        return metric
+
+    @torch.no_grad() #
     def log_images(self, batch, N=8, n_row=4, sample=True, ddim_steps=200, ddim_eta=1., return_keys=None,
                    quantize_denoised=True, inpaint=False, plot_denoise_rows=False, plot_progressive_rows=False,
                    plot_diffusion_rows=False, **kwargs):
@@ -3197,13 +3294,14 @@ class LatentDiffusionSRTextWT(DDPM):
                                            force_c_encode=True,
                                            return_original_cond=True,
                                            bs=N, val=True)
-        N = min(x.shape[0], N)
+        # N = min(x.shape[0], N)
+        N = x.shape[0]
         n_row = min(x.shape[0], n_row)
         if self.test_gt:
             log["gt"] = gt
         else:
             log["inputs"] = x
-            log["reconstruction"] = gt
+            log["gt"] = gt
             log["recon_lq"] = self.decode_first_stage(z)
 
         c = self.cond_stage_model(c_lq)
@@ -3243,6 +3341,7 @@ class LatentDiffusionSRTextWT(DDPM):
                 samples, z_denoise_row = self.sample(cond=c, struct_cond=struct_cond, batch_size=N, timesteps=cur_time_step, return_intermediates=True, time_replace=self.time_replace)
             x_samples = self.decode_first_stage(samples)
             log["samples"] = x_samples
+
             if plot_denoise_rows:
                 denoise_grid = self._get_denoise_row_from_list(z_denoise_row)
                 log["denoise_row"] = denoise_grid
@@ -3299,6 +3398,11 @@ class LatentDiffusionSRTextWT(DDPM):
         params = list(self.model.parameters())
         params = params + list(self.cond_stage_model.parameters())
         params = params + list(self.structcond_stage_model.parameters())
+
+        # 添加 TrainableCameraInversion_stage_model 的参数
+        if hasattr(self, "TrainableCameraInversion_stage_model"):
+            params = params + list(self.TrainableCameraInversion_stage_model.parameters())
+
         if self.learn_logvar:
             assert not self.learn_logvar
             print('Diffusion model optimizing logvar')
@@ -3457,3 +3561,31 @@ class Layout2ImgDiffusion(LatentDiffusion):
         cond_img = torch.stack(bbox_imgs, dim=0)
         logs['bbox_image'] = cond_img
         return logs
+
+if __name__ == '__main__':
+    from omegaconf import OmegaConf
+
+    config_path = 'configs/stableSRNew/v2-finetune_text_T_256-512_calibration.yaml'
+    config = OmegaConf.load(config_path)
+
+    # latentdiffusionsrtextwt = LatentDiffusionSRTextWT(opt)
+
+    model = instantiate_from_config(config.model)
+    model.configs = config
+    # 将模型移到 GPU
+    # model = model.cuda()
+    print(model.TrainableCameraInversion_stage_model.PhiL)
+
+    # lq = torch.rand(1,3,540,720)
+    # gt = torch.rand(1,3,512,512)
+    # batch = {
+    #     'lq': lq,
+    #     'gt': gt
+    # }
+    #
+    # loss = model.shared_step(batch)
+    # print(loss)
+
+    # metric = model.log_metric(batch, N=2, sample=True)
+
+

@@ -26,7 +26,7 @@ version.py
 *.svg
 *.ckpt
 *.pt
-
+*.whl
 # template
 
 # Byte-compiled / optimized / DLL files

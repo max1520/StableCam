@@ -720,13 +720,13 @@ class Decoder_Mix(nn.Module):
 
         # upsampling
         self.up = nn.ModuleList()
-        for i_level in reversed(range(self.num_resolutions)):
+        for i_level in reversed(range(self.num_resolutions)): #3,2,1,0
             block = nn.ModuleList()
             attn = nn.ModuleList()
             block_out = ch*ch_mult[i_level]
 
-            if i_level != self.num_resolutions-1:
-                if i_level != 0:
+            if i_level != self.num_resolutions-1: #避免最顶层（第 3 层）初始化融合层
+                if i_level != 0: #避免最底层
                     fuse_layer = Fuse_sft_block_RRDB(in_ch=block_out, out_ch=block_out, num_block=num_fuse_block)
                     setattr(self, 'fusion_layer_{}'.format(i_level), fuse_layer)
 
@@ -771,8 +771,8 @@ class Decoder_Mix(nn.Module):
         h = self.mid.block_2(h, temb)
 
         # upsampling
-        for i_level in reversed(range(self.num_resolutions)):
-            for i_block in range(self.num_res_blocks+1):
+        for i_level in reversed(range(self.num_resolutions)): #3,2,1,0
+            for i_block in range(self.num_res_blocks+1): #0,1,2
                 h = self.up[i_level].block[i_block](h, temb)
                 if len(self.up[i_level].attn) > 0:
                     h = self.up[i_level].attn[i_block](h)

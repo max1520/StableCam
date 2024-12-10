@@ -123,6 +123,7 @@ class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
     """
     A sequential module that passes timestep embeddings to the children that
     support it as an extra input.
+    允许灵活处理不同类型的模块，在不同计算步骤中加入条件输入。
     """
 
     def forward(self, x, emb, context=None, struct_cond=None, seg_cond=None):
@@ -457,7 +458,7 @@ class ResBlockDual(TimestepBlockDual):
         else:
             h = h + emb_out
             h = self.out_layers(h)
-        h = self.spade(h, s_cond)
+        h = self.spade(h, s_cond)  #H(B,320,64,64) s_cond:dict4:(b,256,64/32/16/8)
         return self.skip_connection(x) + h
 
 class AttentionBlock(nn.Module):
@@ -1342,6 +1343,11 @@ class EncoderUNetModelWT(nn.Module):
     """
     The half UNet model with attention and timestep embedding.
     For usage, see UNet.
+    Time-awear Encoder
+    时间步嵌入模块 (time_embed)：时间步编码将时间步 timesteps 转化为 time_embed_dim 的向量，作为模型的时间条件。
+    输入块（input_blocks）：逐级添加多个残差块、注意力模块和下采样模块。每个块后会更新特征图的分辨率和通道数。
+    中间块（middle_block）：对输入进行最后一层的残差、注意力操作。
+    特征变换模块 (fea_tran)：将每个分辨率的特征图转换为指定输出通道数的特征图。
     """
 
     def __init__(
@@ -1583,7 +1589,7 @@ if __name__ == '__main__':
 
     x = torch.randn(2,4,64,64).to(device)
     timesteps = torch.randn(2,).to(device)
-    context = x = torch.randn(2,4,512,512).to(device)
+    context = torch.randn(2,).to(device)
     struct = encoderunetmodelWT(x, timesteps)
     y = unetmodeldualcondv2(x, timesteps, context=context, struct_cond=struct)
     print(y)

@@ -335,7 +335,7 @@ def main():
     base_i = opt.base_i
 
     # data
-    dataset = RealESRGANPairedDataset(config.data.params.train.params)
+    dataset = RealESRGANPairedDataset(config.test_data.params.test.params)
     test_dataloader = DataLoader(
         dataset,
         batch_size=config.test_data.params.batch_size,
@@ -384,13 +384,12 @@ def main():
             with model.ema_scope():
                 tic = time.time()
                 all_samples = list()
-                for batch_idx, samples in enumerate(test_dataloader):
-                    if os.path.exists(os.path.join(latent_path, f"{base_i:08}.npy")):
-                        base_i += 1
-                        total_num += 1
-                        continue
+                for batch_idx, batch in enumerate(test_dataloader):
+                    lq_paths = batch['lq_path']  # 获取 lq_path 列表
+                    if all(os.path.exists(os.path.join(latent_path, f"{os.path.splitext(os.path.basename(lq_path))[0]}.npy")) for lq_path in lq_paths):
+                        continue  # 如果所有路径都存在，则跳过
                     else:
-                        init_latent, text_init, latent_gt, init_image, gt, gt_recon = model.get_input(samples, return_first_stage_outputs=True)
+                        init_latent, text_init, latent_gt, init_image, gt, gt_recon = model.get_input(batch, return_first_stage_outputs=True)
                         text_init = ['']*init_image.size(0)
                         semantic_c = model.cond_stage_model(text_init)
 
@@ -410,25 +409,26 @@ def main():
                                 if torch.isnan(x_samples[i]).any():
                                     pass
                                 else:
+                                    base_filename = os.path.splitext(os.path.basename(lq_paths[i]))[0]  # 基于 lq_path 提取文件名
+
                                     x_sample = 255. * rearrange(x_samples[i].cpu().numpy(), 'c h w -> h w c')
                                     Image.fromarray(x_sample.astype(np.uint8)).save(
-                                        os.path.join(sample_path, f"{base_i:08}.png"))
+                                        os.path.join(sample_path, f"{base_filename}.png"))
 
                                     x_input = 255. * rearrange(init_image[i].cpu().numpy(), 'c h w -> h w c')
-                                    x_input = (x_input+255.)/2
+                                    x_input = (x_input + 255.) / 2
                                     Image.fromarray(x_input.astype(np.uint8)).save(
-                                        os.path.join(input_path, f"{base_i:08}.png"))
+                                        os.path.join(input_path, f"{base_filename}.png"))
 
                                     x_gt = 255. * rearrange(gt[i].data.cpu().numpy(), 'c h w -> h w c')
-                                    x_gt = (x_gt+255.)/2
+                                    x_gt = (x_gt + 255.) / 2
                                     Image.fromarray(x_gt.astype(np.uint8)).save(
-                                        os.path.join(gt_path, f"{base_i:08}.png"))
+                                        os.path.join(gt_path, f"{base_filename}.png"))
 
                                     x_latent = samples[i].unsqueeze(0)
                                     x_latent = x_latent.data.cpu().numpy()
-                                    np.save(os.path.join(latent_path, f"{base_i:08}.npy"), x_latent)
+                                    np.save(os.path.join(latent_path, f"{base_filename}.npy"), x_latent)
 
-                                    base_i += 1
                                     total_num += 1
                     # Number of images to generate each time
                     if total_num > 5000:

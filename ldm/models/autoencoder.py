@@ -17,7 +17,14 @@ from basicsr.data.degradations import random_add_gaussian_noise_pt, random_add_p
 import random
 
 import torchvision.transforms as transforms
-
+from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import peak_signal_noise_ratio as psnr
+from metric_utils import AverageMeter
+import os
+from torchvision.utils import save_image
+from einops import rearrange, repeat
+from PIL import Image
+import numpy as np
 
 class VQModel(pl.LightningModule):
     def __init__(self,
@@ -476,7 +483,7 @@ class AutoencoderKLResi(pl.LightningModule):
                  image_key="image",
                  colorize_nlabels=None,
                  monitor=None,
-                 fusion_w=1.0,
+                 fusion_w=0.5,
                  freeze_dec=True,
                  synthesis_data=False,
                  use_usm=False,
@@ -491,6 +498,8 @@ class AutoencoderKLResi(pl.LightningModule):
         self.quant_conv = torch.nn.Conv2d(2*ddconfig["z_channels"], 2*embed_dim, 1)
         self.post_quant_conv = torch.nn.Conv2d(embed_dim, ddconfig["z_channels"], 1)
         self.embed_dim = embed_dim
+        self.psnr = AverageMeter()
+        self.ssim = AverageMeter()
         if colorize_nlabels is not None:
             assert type(colorize_nlabels)==int
             self.register_buffer("colorize", torch.randn(3, colorize_nlabels, 1, 1))
@@ -868,7 +877,64 @@ class AutoencoderKLResi(pl.LightningModule):
         self.log("val/rec_loss", log_dict_ae["val/rec_loss"])
         self.log_dict(log_dict_ae)
         self.log_dict(log_dict_disc)
-        return self.log_dict
+        # return self.log_dict
+
+        # caculater metric
+        with torch.no_grad():
+            gts = torch.clamp((gts + 1.0) / 2.0, min=0.0, max=1.0)
+            reconstructions = torch.clamp((reconstructions + 1.0) / 2.0, min=0.0, max=1.0)
+            gt_channel1 = gts[:, 0, :, :].cpu().numpy()
+            reconstructions_channel1 = reconstructions[:, 0, :, :].cpu().numpy()
+            for gt_img, recon_img in zip(gt_channel1, reconstructions_channel1):
+                psnr_value = psnr(recon_img, gt_img, data_range=1)
+                ssim_value = ssim(recon_img, gt_img, data_range=1)
+                self.psnr.update(psnr_value, n=1)
+                self.ssim.update(ssim_value, n=1)
+
+    def on_validation_epoch_end(self):
+        avg_psnr = self.psnr.avg
+        avg_ssim = self.ssim.avg
+        # 记录到日志
+        self.log("val/avg_psnr", avg_psnr, prog_bar=True, logger=True, on_step=False, on_epoch=True)
+        self.log("val/avg_ssim", avg_ssim, prog_bar=True, logger=True, on_step=False, on_epoch=True)
+        # 重置以便下个 epoch 使用
+        self.psnr.reset()
+        self.ssim.reset()
+
+    def test_step(self, batch, batch_idx):
+        inputs, gts, latents, _ = self.get_input(batch)
+        reconstructions, posterior = self(inputs, latents)
+
+        # 将 reconstructions 和 gts 归一化到 [0, 1] 范围内
+        reconstructions = torch.clamp((reconstructions + 1.0) / 2.0, min=0.0, max=1.0)
+        gts = torch.clamp((gts + 1.0) / 2.0, min=0.0, max=1.0)
+
+        # 根据需要动态创建路径
+        recon_dir = f"results/CFW/global_step_{self.trainer.global_step}/sample"  # 可以使用 global_step 作为路径的一部分
+        gt_dir = f"results/CFW/global_step_{self.trainer.global_step}/gt"
+        os.makedirs(recon_dir, exist_ok=True)
+        os.makedirs(gt_dir, exist_ok=True)
+
+        lq_paths = self.trainer.datamodule.datasets['test'].data.lq_paths
+
+        for i in range(reconstructions.size(0)):  # 遍历 batch 中的每个样本
+            # 获取对应的文件名
+            lq_path = lq_paths[batch_idx * reconstructions.size(0) + i]  # 计算当前样本的文件路径
+            file_name = os.path.basename(lq_path)  # 获取文件名（如 "image (1).png"）
+
+            # 获取基础文件名，不包含扩展名
+            basename = os.path.splitext(file_name)[0]
+
+            # 保存 reconstructions 图像
+            recon_img = rearrange(reconstructions[i].cpu().numpy(), 'c h w -> h w c')  # 转换为 (h, w, c) 形状
+            Image.fromarray((255. * recon_img).astype(np.uint8)).save(os.path.join(recon_dir, basename + '.png'))
+
+            # 保存 gts 图像
+            gt_img = rearrange(gts[i].cpu().numpy(), 'c h w -> h w c')  # 转换为 (h, w, c) 形状
+            Image.fromarray((255. * gt_img).astype(np.uint8)).save(os.path.join(gt_dir, basename + '.png'))
+
+        return reconstructions
+
 
     def configure_optimizers(self):
         lr = self.learning_rate
@@ -883,6 +949,47 @@ class AutoencoderKLResi(pl.LightningModule):
 
     def get_last_layer(self):
         return self.decoder.conv_out.weight
+
+    # @torch.no_grad()
+    # def log_metrics(self, batch, only_inputs=False, **kwargs):
+    #     if self.synthesis_data:
+    #         x, gts, latents, samples = self.get_input_synthesis(batch, val=False)
+    #     else:
+    #         x, gts, latents, samples = self.get_input(batch)
+    #     x = x.to(self.device)
+    #     latents = latents.to(self.device)
+    #     if not only_inputs:
+    #         xrec, posterior = self(x, latents)
+    #         if x.shape[1] > 3:
+    #             # colorize with random projection
+    #             assert xrec.shape[1] > 3
+    #             x = self.to_rgb(x)
+    #             gts = self.to_rgb(gts)
+    #             samples = self.to_rgb(samples)
+    #             xrec = self.to_rgb(xrec)
+    #         # log["samples"] = self.decode(torch.randn_like(posterior.sample()))
+    #
+    #     # caculater metric
+    #     gts = torch.clamp((gts + 1.0) / 2.0, min=0.0, max=1.0)
+    #     xrec = torch.clamp((xrec + 1.0) / 2.0, min=0.0, max=1.0)
+    #     gt_channel1 = gts[:, 0, :, :].cpu().numpy()
+    #     xrec_channel1 = xrec[:, 0, :, :].cpu().numpy()
+    #     psnr_values = []
+    #     ssim_values = []
+    #     for i in range(gt_channel1.shape[0]):
+    #         ssim_value = ssim(gt_channel1[i], xrec_channel1[i], data_range=1)
+    #         psnr_value = psnr(gt_channel1[i], xrec_channel1[i], data_range=1)
+    #         ssim_values.append(ssim_value)
+    #         psnr_values.append(psnr_value)
+    #     # 计算平均 PSNR 和 SSIM
+    #     avg_ssim = sum(ssim_values) / len(ssim_values)
+    #     avg_psnr = sum(psnr_values) / len(psnr_values)
+    #
+    #     metric = {
+    #         'avg_psnr': avg_psnr,
+    #         'avg_ssim': avg_ssim
+    #     }
+    #     return metric
 
     @torch.no_grad()
     def log_images(self, batch, only_inputs=False, **kwargs):
@@ -917,3 +1024,58 @@ class AutoencoderKLResi(pl.LightningModule):
         x = F.conv2d(x, weight=self.colorize)
         x = 2.*(x-x.min())/(x.max()-x.min()) - 1.
         return x
+
+
+
+if __name__ == '__main__':
+    device = torch.device('cuda')
+    autoencoderklresi = AutoencoderKLResi(
+        ckpt_path= r"D:\cqy\stableSR\logs\2024-10-10T15-15-02_tIK_SFT_256-512\checkpoints\last.ckpt",
+        monitor="val/rec_loss",
+        embed_dim=4,
+        fusion_w=0.5,
+        freeze_dec=True,
+        synthesis_data=False,
+        lossconfig={
+            "target": "ldm.modules.losses.LPIPSWithDiscriminator",
+            "params": {
+                "disc_start": 501,
+                "kl_weight": 0,
+                "disc_weight": 0.025,
+                "disc_factor": 1.0
+            }
+        },
+        ddconfig={
+            "double_z": True,
+            "z_channels": 4,
+            "resolution": 512,
+            "in_channels": 3,
+            "out_ch": 3,
+            "ch": 128,
+            "ch_mult": [1, 2, 4, 4],
+            "num_res_blocks": 2,
+            "num_fuse_block": 1,
+            "attn_resolutions": [],
+            "dropout": 0.0
+        },
+        image_key='gt'
+    ).to(device)
+
+    b = 4
+    input = torch.rand(b,3,512,512).to(device)
+    gt = torch.rand(b,3,512,512).to(device)
+    latent = torch.rand(b,4,64,64).to(device)
+    sample = torch.rand(b,3,512,512).to(device)
+
+    batch = {
+        'lq': input,
+        'gt': gt,
+        'latent': latent,
+        'sample': sample
+    }
+    batch_idx = 0
+    # metric = autoencoderklresi.log_metrics(batch)
+    # autoencoderklresi.training_step(batch, batch_idx, optimizer_idx=0)
+    y = autoencoderklresi(input, latent)
+
+

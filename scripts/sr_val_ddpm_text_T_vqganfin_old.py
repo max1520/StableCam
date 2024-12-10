@@ -102,12 +102,13 @@ def load_img(path):
 	image = Image.open(path).convert("RGB")
 	w, h = image.size
 	print(f"loaded input image of size ({w}, {h}) from {path}")
-	w, h = map(lambda x: x - x % 32, (w, h))  # resize to integer multiple of 32
-	image = image.resize((w, h), resample=PIL.Image.LANCZOS)
+	# w, h = map(lambda x: x - x % 32, (w, h))  # resize to integer multiple of 32
+	# image = image.resize((w, h), resample=PIL.Image.LANCZOS)
 	image = np.array(image).astype(np.float32) / 255.0
 	image = image[None].transpose(0, 3, 1, 2)
 	image = torch.from_numpy(image)
-	return 2.*image - 1.
+
+	return image
 
 
 def main():
@@ -172,7 +173,7 @@ def main():
 	parser.add_argument(
 		"--seed",
 		type=int,
-		default=42,
+		default=10000,
 		help="the seed (for reproducible sampling)",
 	)
 	parser.add_argument(
@@ -184,8 +185,8 @@ def main():
 	)
 	parser.add_argument(
 		"--input_size",
-		type=int,
-		default=512,
+		type=str,
+		default=None,
 		help="input size",
 	)
 	parser.add_argument(
@@ -225,9 +226,10 @@ def main():
 
 	seed_everything(opt.seed)
 
+	input_size = tuple(map(int, opt.input_size.split(',')))
 	transform = torchvision.transforms.Compose([
-		torchvision.transforms.Resize(opt.input_size),
-		torchvision.transforms.CenterCrop(opt.input_size),
+		torchvision.transforms.Resize(input_size),
+		torchvision.transforms.CenterCrop(input_size),
 	])
 
 	config = OmegaConf.load(f"{opt.config}")
@@ -248,7 +250,11 @@ def main():
 			continue
 		cur_image = load_img(os.path.join(opt.init_img, item)).to(device)
 		cur_image = transform(cur_image)
-		cur_image = cur_image.clamp(-1, 1)
+		if model.is_trainable_camera_inversion:
+			cur_image = model.trainable_camera_inversion(cur_image)
+		cur_image = torch.clamp(cur_image, 0, 1)
+		cur_image = cur_image * 2 - 1.0
+		# cur_image = cur_image.clamp(-1, 1)
 		init_image_list.append(cur_image)
 	init_image_list = torch.cat(init_image_list, dim=0)
 	niters = math.ceil(init_image_list.size(0) / batch_size)
@@ -308,7 +314,7 @@ def main():
 	niqe_list = []
 	with torch.no_grad():
 		with precision_scope("cuda"):
-			with model.ema_scope():
+			# with model.ema_scope():
 				tic = time.time()
 				count = 0
 				for n in trange(niters, desc="Sampling"):

@@ -1,6 +1,6 @@
 sf: 4
 model:
-  base_learning_rate: 5.0e-05
+  base_learning_rate: 2.0e-06
   target: ldm.models.diffusion.ddpm.LatentDiffusionSRTextWT
   params:
     # parameterization: "v"
@@ -18,16 +18,17 @@ model:
     monitor: val/loss_simple_ema
     scale_factor: 0.18215
     use_ema: False
-    # for training only
-    ckpt_path: D:\cqy\StableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
+    ckpt_path: D:\cqy\stableSR\logs\2024-10-10T15-15-02_Tik_SFT_256-512\checkpoints\choice.ckpt
     unfrozen_diff: False
     random_size: False
     time_replace: 1000
     use_usm: True
-    #P2 weighting, we do not use in final version
+    # test_gt: True
+    #P2 weighting
     p2_gamma: ~
     p2_k: ~
-    # ignore_keys: []
+    #
+    is_trainable_camera_inversion: False
 
     unet_config:
       target: ldm.modules.diffusionmodules.openaimodel.UNetModelDualcondV2
@@ -51,8 +52,7 @@ model:
     first_stage_config:
       target: ldm.models.autoencoder.AutoencoderKL
       params:
-        # for training only
-        ckpt_path: D:\cqy\StableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
+        ckpt_path: D:\cqy\stableSR\logs\2024-10-10T15-15-02_Tik_SFT_256-512\checkpoints\choice.ckpt
         embed_dim: 4
         monitor: val/rec_loss
         ddconfig:
@@ -101,6 +101,10 @@ model:
         resblock_updown: False
         use_new_attention_order: False
 
+    TrainableCameraInversion_stage_config:
+      target: ldm.modules.trainable_camera_inversion.amplitude.TrainableCameraInversion
+      params:
+        initial_mode: calibration
 
 degradation:
   # the first degradation process
@@ -123,22 +127,20 @@ degradation:
   jpeg_range2: [60, 100]
 
   gt_size: 512
-  no_degradation_prob: 0.01
 
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 8
+    batch_size: 4
     num_workers: 6
     wrap: false
     train:
-      target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
+      target: basicsr.data.realesrgan_dataset.RealESRGANPairedDataset
       params:
-        phase: train
         queue_size: 180
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512_debug/label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512_debug/inter_512'
-
+        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
+        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_256-512'
+        num_face: 2000
         crop_size: 512
         io_backend:
           type: disk
@@ -165,11 +167,10 @@ data:
         use_hflip: True
         use_rot: False
     validation:
-      target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
+      target: basicsr.data.realesrgan_dataset.RealESRGANPairedDataset
       params:
-        phase: validation
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512_debug/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512_debug/eval_inter_512'
+        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
+        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_256-512'
         crop_size: 512
         io_backend:
           type: disk
@@ -199,15 +200,17 @@ data:
 test_data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 1
+    batch_size: 6
     num_workers: 6
     wrap: false
     test:
-      target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
+      target: basicsr.data.realesrgan_dataset.RealESRGANPairedDataset
       params:
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512_debug/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512_debug/eval_inter_512'
+        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
+        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_256-512'
+        num_face: 2000
         crop_size: 512
+        mul_num: 10
         io_backend:
           type: disk
 
@@ -236,20 +239,15 @@ test_data:
 lightning:
   modelcheckpoint:
     params:
-      every_n_train_steps: 1500
+      every_n_train_steps: 5000
   callbacks:
     image_logger:
       target: main.ImageLogger
       params:
-        batch_frequency: 1500
+        batch_frequency: 5000
         max_images: 4
         increase_log_steps: False
 
   trainer:
     benchmark: True
     max_steps: 800000
-    accumulate_grad_batches: 4
-    limit_train_batches: 1
-    limit_test_batches: 1
-    limit_val_batches: 1
-

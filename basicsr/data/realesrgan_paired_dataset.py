@@ -7,7 +7,7 @@ from basicsr.data.transforms import augment, paired_random_crop
 from basicsr.utils import FileClient, imfrombytes, img2tensor
 from basicsr.utils.registry import DATASET_REGISTRY
 
-@DATASET_REGISTRY.register(suffix='basicsr')
+# @DATASET_REGISTRY.register(suffix='basicsr')
 class RealESRGANPairedDataset(data.Dataset):
     """Paired image dataset for image restoration.
 
@@ -33,6 +33,8 @@ class RealESRGANPairedDataset(data.Dataset):
         use_rot (bool): Use rotation (use vertical flip and transposing h and w for implementation).
         scale (bool): Scale, which will be added automatically.
         phase (str): 'train' or 'val'.
+
+        范围变为0-1
     """
 
     def __init__(self, opt):
@@ -94,9 +96,9 @@ class RealESRGANPairedDataset(data.Dataset):
 
         # augmentation for training
         if self.opt['phase'] == 'train':
-            gt_size = self.opt['gt_size']
-            # random crop
-            img_gt, img_lq = paired_random_crop(img_gt, img_lq, gt_size, scale, gt_path)
+            # gt_size = self.opt['gt_size']
+            # # random crop
+            # img_gt, img_lq = paired_random_crop(img_gt, img_lq, gt_size, scale, gt_path)
             # flip, rotation
             img_gt, img_lq = augment([img_gt, img_lq], self.opt['use_hflip'], self.opt['use_rot'])
 
@@ -113,12 +115,42 @@ class RealESRGANPairedDataset(data.Dataset):
         return len(self.paths)
 
 
-if __name__ == 'main':
-    opt = {'phase': 'train', 'queue_size': 180, 'dataroot_gt': 'D:/cqy/flat_data/image1k_512/label_512', 'dataroot_lq': 'D:/cqy/flat_data/image1k_512/inter_512', 'crop_size': 512, 'io_backend': {'type': 'disk'}, 'blur_kernel_size': 21, 'kernel_list': ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso'], 'kernel_prob': [0.45, 0.25, 0.12, 0.03, 0.12, 0.03], 'sinc_prob': 0.1, 'blur_sigma': [0.2, 1.5], 'betag_range': [0.5, 2.0], 'betap_range': [1, 1.5], 'blur_kernel_size2': 11, 'kernel_list2': ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso'], 'kernel_prob2': [0.45, 0.25, 0.12, 0.03, 0.12, 0.03], 'sinc_prob2': 0.1, 'blur_sigma2': [0.2, 1.0], 'betag_range2': [0.5, 2.0], 'betap_range2': [1, 1.5], 'final_sinc_prob': 0.8, 'gt_size': 512, 'use_hflip': True, 'use_rot': False, 'scale': 1}
-    flat_dataset = RealESRGANPairedDataset(opt)
-    print("数据个数：", len(flat_dataset))
-    train_loader = data.DataLoader(dataset=flat_dataset,
-                                               batch_size=1,
+if __name__ == '__main__':
+    opt = {
+        'phase': 'train',
+        'queue_size': 180,
+        'dataroot_gt': 'D:/cqy/flat_data/image1k_512/label_512',
+        'dataroot_lq': 'D:/cqy/flat_data/image1k_512/measure',
+        'crop_size': 512,
+        'io_backend': {'type': 'disk'},
+        'gt_size': 512,
+        'use_hflip': True,
+        'use_rot': False,
+        'scale': 1,
+
+        # Blur kernel settings
+        'blur_kernel_size': 21,
+        'kernel_list': ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso'],
+        'kernel_prob': [0.45, 0.25, 0.12, 0.03, 0.12, 0.03],
+        'sinc_prob': 0.1,
+        'blur_sigma': [0.2, 1.5],
+        'betag_range': [0.5, 2.0],
+        'betap_range': [1, 1.5],
+
+        # Additional blur kernel settings
+        'blur_kernel_size2': 11,
+        'kernel_list2': ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso'],
+        'kernel_prob2': [0.45, 0.25, 0.12, 0.03, 0.12, 0.03],
+        'sinc_prob2': 0.1,
+        'blur_sigma2': [0.2, 1.0],
+        'betag_range2': [0.5, 2.0],
+        'betap_range2': [1, 1.5],
+        'final_sinc_prob': 0.8
+    }
+    train_dataset = RealESRGANPairedDataset(opt)
+    print("数据个数：", len(train_dataset))
+    train_loader = data.DataLoader(dataset=train_dataset,
+                                               batch_size=16,
                                                shuffle=True)
     for result in train_loader:
         print(result['lq'].shape)
