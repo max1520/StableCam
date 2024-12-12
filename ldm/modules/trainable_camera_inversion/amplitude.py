@@ -57,4 +57,4 @@ if __name__ == '__main__':
     trainablecamerainversion = TrainableCameraInversion(initial_mode='calibration').to(device)
     x = torch.rand(1,3,540,720).to(device)
     y = trainablecamerainversion(x)
-    print(y.shape)
+    print(y.shape)  #(1,3,512,512)
