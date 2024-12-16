@@ -59,11 +59,11 @@ def get_wiener_matrix(psf, Gamma: float = 2e4, centre_roll: bool = False):
 
 
 class FFTLayer(nn.Module):
-    def __init__(self, mode='calibration', fft_gamma=2e4, image_size=(256, 256), is_require_grad=True):
+    def __init__(self, initial_mode='calibration', fft_gamma=2e4, image_size=(256, 256), is_require_grad=True):
         super().__init__()
         self.fft_gamma = fft_gamma
         self.image_size = image_size
-        self.mode = mode
+        self.initial_mode = initial_mode
         self.is_require_grad = is_require_grad
         ###
         # psf = torch.rand(1052, 1400).to(self.device)
@@ -124,7 +124,7 @@ class FFTLayer(nn.Module):
 if __name__ == '__main__':
     import os
     # 设置使用的 GPU
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"  # 使用 GPU 6 和 GPU 7
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 使用 GPU 6 和 GPU 7
     device = torch.device('cuda')
 
     # 初始化模型并使用 DataParallel 包装
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     model = torch.nn.DataParallel(model)  # 包装以支持多卡
 
     # 创建输入数据
-    img = torch.rand(2, 1, 1052, 1400).to(device)
+    img = torch.rand(8, 3, 1052, 1400).to(device)
 
     # 前向传播
     y = model(img)

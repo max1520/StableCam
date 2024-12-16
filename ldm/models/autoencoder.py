@@ -910,8 +910,8 @@ class AutoencoderKLResi(pl.LightningModule):
         gts = torch.clamp((gts + 1.0) / 2.0, min=0.0, max=1.0)
 
         # 根据需要动态创建路径
-        recon_dir = f"results/CFW/global_step_{self.trainer.global_step}/sample"  # 可以使用 global_step 作为路径的一部分
-        gt_dir = f"results/CFW/global_step_{self.trainer.global_step}/gt"
+        recon_dir = f"results/CFW_calibration//sample"  # 可以使用 global_step 作为路径的一部分
+        gt_dir = f"results/CFW_calibration/gt"
         os.makedirs(recon_dir, exist_ok=True)
         os.makedirs(gt_dir, exist_ok=True)
 
