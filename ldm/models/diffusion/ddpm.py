@@ -1576,6 +1576,7 @@ class LatentDiffusionSRTextWT(DDPM):
                  cond_stage_config,
                  structcond_stage_config,
                  TrainableCameraInversion_stage_config,
+                 SR_stage_config,
                  num_timesteps_cond=None,
                  cond_stage_key="image",
                  cond_stage_trainable=False,
@@ -1593,6 +1594,7 @@ class LatentDiffusionSRTextWT(DDPM):
                  use_usm=False,
                  mix_ratio=0.0,
                  is_trainable_camera_inversion=False,
+                 is_sr_net=False,
                  *args, **kwargs):
         # put this in your init
         self.num_timesteps_cond = default(num_timesteps_cond, 1)
@@ -1613,6 +1615,7 @@ class LatentDiffusionSRTextWT(DDPM):
         ignore_keys = kwargs.pop("ignore_keys", [])
         super().__init__(conditioning_key=conditioning_key, *args, **kwargs)
         self.is_trainable_camera_inversion = is_trainable_camera_inversion
+        self.is_sr_net = is_sr_net
         self.concat_mode = concat_mode
         self.cond_stage_trainable = cond_stage_trainable
         self.cond_stage_key = cond_stage_key
@@ -1629,6 +1632,8 @@ class LatentDiffusionSRTextWT(DDPM):
         self.instantiate_structcond_stage(structcond_stage_config)
         if self.is_trainable_camera_inversion:
             self.instantiate_TrainableCameraInversion_stage(TrainableCameraInversion_stage_config)
+        if self.is_sr_net:
+            self.instantiate_SR_stage(SR_stage_config)
         self.cond_stage_forward = cond_stage_forward
         self.clip_denoised = False
         self.bbox_tokenizer = None
@@ -1790,6 +1795,11 @@ class LatentDiffusionSRTextWT(DDPM):
         model = instantiate_from_config(config)
         self.TrainableCameraInversion_stage_model = model
         self.TrainableCameraInversion_stage_model.train()
+
+    def instantiate_SR_stage(self, config):
+        model = instantiate_from_config(config)
+        self.sr_stage_model = model
+        self.sr_stage_model.train()
 
     def _get_denoise_row_from_list(self, samples, desc='', force_no_decoder_quantization=False):
         denoise_row = []
@@ -1969,7 +1979,7 @@ class LatentDiffusionSRTextWT(DDPM):
     def get_input(self, batch, k=None, return_first_stage_outputs=False, force_c_encode=False,
               cond_key=None, return_original_cond=False, bs=None, val=False, text_cond=[''], return_gt=False, resize_lq=False):
         if not hasattr(self, 'usm_sharpener'):
-            usm_sharpener = USMSharp().cuda()  # do usm sharpening
+            usm_sharpener = USMSharp().cuda()  # do usm sharpening#
 
         im_gt = batch['gt'].cuda()
         if self.use_usm:
@@ -2398,18 +2408,18 @@ class LatentDiffusionSRTextWT(DDPM):
             return self.first_stage_model.encode(x)
 
     def shared_step(self, batch, **kwargs):
-        x, c, gt = self.get_input(batch, self.first_stage_key)
-        loss = self(x, c, gt)
+        z_lq, c, z_gt, im_lq, im_gt, _ = self.get_input(batch, return_first_stage_outputs=True)
+        loss = self(z_lq, c, z_gt, im_lq, im_gt)
         return loss
 
-    def forward(self, x, c, gt, *args, **kwargs):
-        #随机选择时间步数#
-        index = np.random.randint(0, self.num_timesteps, size=x.size(0))
+    def forward(self, z_lq, c, z_gt, im_lq, im_gt, *args, **kwargs):
+        #随机选择时间步数##
+        index = np.random.randint(0, self.num_timesteps, size=z_lq.size(0))
         t = torch.from_numpy(index)
         t = t.to(self.device).long()
 
         t_ori = torch.tensor([self.ori_timesteps[index_i] for index_i in index])
-        t_ori = t_ori.long().to(x.device)
+        t_ori = t_ori.long().to(z_lq.device)
 
         if self.model.conditioning_key is not None:
             assert c is not None
@@ -2422,10 +2432,10 @@ class LatentDiffusionSRTextWT(DDPM):
                 tc = self.cond_ids[t].to(self.device)
                 c = self.q_sample(x_start=c, t=tc, noise=torch.randn_like(c.float()))
         if self.test_gt:
-            struc_c = self.structcond_stage_model(gt, t_ori)
+            struc_c = self.structcond_stage_model(z_gt, t_ori)
         else:
-            struc_c = self.structcond_stage_model(x, t_ori)
-        return self.p_losses(gt, c, struc_c, t, t_ori, x, *args, **kwargs)
+            struc_c = self.structcond_stage_model(z_lq, t_ori)
+        return self.p_losses(z_gt, c, struc_c, t, t_ori, z_lq, im_lq, im_gt, *args, **kwargs)
 
     def _rescale_annotations(self, bboxes, crop_coordinates):  # TODO: move to dataset
         def rescale_bbox(bbox):
@@ -2561,8 +2571,8 @@ class LatentDiffusionSRTextWT(DDPM):
         kl_prior = normal_kl(mean1=qt_mean, logvar1=qt_log_variance, mean2=0.0, logvar2=0.0)
         return mean_flat(kl_prior) / np.log(2.0)
 
-    def p_losses(self, x_start, cond, struct_cond, t, t_ori, z_gt, noise=None):
-        #前向过程#
+    def p_losses(self, x_start, cond, struct_cond, t, t_ori, z_lq, im_lq, im_gt, noise=None):
+        #前向过程##
         noise = default(noise, lambda: torch.randn_like(x_start))
         x_noisy = self.q_sample(x_start=x_start, t=t, noise=noise)
 
@@ -2610,6 +2620,14 @@ class LatentDiffusionSRTextWT(DDPM):
         loss_vlb = (self.lvlb_weights[t] * loss_vlb).mean()
         loss_dict.update({f'{prefix}/loss_vlb': loss_vlb})
         loss += (self.original_elbo_weight * loss_vlb)
+
+        #sr损失
+        if self.is_sr_net:
+            im_lq_sr = self.sr_stage_model(im_lq)
+            loss_sr = self.get_loss(im_lq_sr, im_gt, mean=False).mean(dim=(1, 2, 3))
+            loss_dict.update({f'{prefix}/loss_sr': loss_sr})
+            loss += (self.sr_stage_model.loss_sr_weight * loss_sr)
+
         loss_dict.update({f'{prefix}/loss': loss})
 
         return loss, loss_dict
