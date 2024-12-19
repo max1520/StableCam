@@ -1526,7 +1526,7 @@ class EncoderUNetModelWT(nn.Module):
         :param timesteps: a 1-D batch of timesteps.
         :return: an [N x K] Tensor of outputs.
         """
-        emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
+        emb = self.time_embed(timestep_embedding(timesteps, self.model_channels)) #正弦编码
 
         result_list = []
         results = {}
