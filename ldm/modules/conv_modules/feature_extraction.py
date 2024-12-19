@@ -62,7 +62,8 @@ class Feature_Extraction_Block(TimestepBlock):
         self.input_blocks = nn.ModuleList(
             [
                 TimestepEmbedSequential(
-                    conv_nd(dims, in_channels, model_channels, 3, padding=1)
+                    conv_nd(dims, in_channels, model_channels, 3, padding=1),
+                    normalization(model_channels)
                 )
             ]
         )

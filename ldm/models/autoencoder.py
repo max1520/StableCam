@@ -1061,7 +1061,7 @@ if __name__ == '__main__':
         image_key='gt'
     ).to(device)
 
-    b = 4
+    b = 1
     input = torch.rand(b,3,512,512).to(device)
     gt = torch.rand(b,3,512,512).to(device)
     latent = torch.rand(b,4,64,64).to(device)
