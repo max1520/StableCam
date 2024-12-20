@@ -12,6 +12,9 @@ from ldm.modules.diffusionmodules.util import (
     timestep_embedding,
 )
 class Feature_Extraction_Block(TimestepBlock):
+    '''
+    get strcuture_cond
+    '''
     def __init__(
         self,
         image_size,
