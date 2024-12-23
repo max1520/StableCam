@@ -10,7 +10,7 @@ stable-diffusion-2-1-base/
 
 *.DS_Store
 .idea/*
-!.idea/runConfigurations/
+!.idea/workspace.xml
 
 # ignored files
 version.py
