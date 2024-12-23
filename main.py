@@ -3,6 +3,7 @@ import numpy as np
 import time
 import torch
 import torchvision
+from torch.utils.data import ConcatDataset
 import pytorch_lightning as pl
 
 from packaging import version
@@ -21,6 +22,7 @@ from pytorch_lightning.utilities import rank_zero_info
 from ldm.data.base import Txt2ImgIterableBaseDataset
 from ldm.util import instantiate_from_config, instantiate_from_config_sr
 from pytorch_lightning.loggers import WandbLogger
+from torch.utils.data import ConcatDataset
 
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="torchvision.transforms.functional_tensor")
@@ -200,6 +202,7 @@ class DataModuleFromConfig(pl.LightningDataModule):
                 self.datasets[k] = WrappedDataset(self.datasets[k])
 
     def _train_dataloader(self):
+        self.datasets["train"] = ConcatDataset([self.datasets["train"], self.datasets["validation"]])
         is_iterable_dataset = isinstance(self.datasets['train'], Txt2ImgIterableBaseDataset)
         if is_iterable_dataset or self.use_worker_init_fn:
             init_fn = worker_init_fn

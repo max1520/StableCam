@@ -143,8 +143,8 @@ data:
       params:
         phase: train
         queue_size: 180
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/inter_256-512'
+        dataroot_gt: 'D:/cqy/flat_data/12172/label_512'
+        dataroot_lq: 'D:/cqy/flat_data/1217/inter_512'
 
         crop_size: 512
         io_backend:
@@ -175,8 +175,8 @@ data:
       target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
         phase: validation
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_256-512'
+        dataroot_gt: 'D:/cqy/flat_data/1217/eval/label_512'
+        dataroot_lq: 'D:/cqy/flat_data/1217/eval/inter_512'
         crop_size: 512
         io_backend:
           type: disk
@@ -212,8 +212,8 @@ test_data:
     test:
       target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_256-512'
+        dataroot_gt: 'D:/cqy/flat_data/1217/eval/label_512'
+        dataroot_lq: 'D:/cqy/flat_data/1217/eval/inter_512'
         crop_size: 512
         io_backend:
           type: disk

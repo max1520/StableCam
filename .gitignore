@@ -9,7 +9,8 @@ weights/
 stable-diffusion-2-1-base/
 
 *.DS_Store
-.idea
+.idea/*
+!.idea/runConfigurations/
 
 # ignored files
 version.py
