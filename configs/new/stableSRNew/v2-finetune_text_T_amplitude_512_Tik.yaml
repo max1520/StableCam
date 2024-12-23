@@ -84,21 +84,21 @@ model:
     structcond_stage_config:
       target: ldm.modules.conv_modules.feature_extraction.Feature_Extraction
       params:
-      image_size: 96
-      in_channels: 4
-      model_channels: 256
-      out_channels: 256
-      num_res_blocks: 2
-      attention_resolutions:  [ 4, 2, 1 ]
-      dropout: 0
-      channel_mult: [ 1, 1, 2, 2 ]
-      conv_resample: true
-      dims: 2
-      use_checkpoint: false
-      use_fp16: false
-      num_heads: 4
-      num_head_channels: -1
-      num_heads_upsample: -1
+        image_size: 96
+        in_channels: 4
+        model_channels: 256
+        out_channels: 256
+        num_res_blocks: 2
+        attention_resolutions:  [ 4, 2, 1 ]
+        dropout: 0
+        channel_mult: [ 1, 1, 2, 2 ]
+        conv_resample: true
+        dims: 2
+        use_checkpoint: false
+        use_fp16: false
+        num_heads: 4
+        num_head_channels: -1
+        num_heads_upsample: -1
 
     TrainableCameraInversion_stage_config:
       target: None
