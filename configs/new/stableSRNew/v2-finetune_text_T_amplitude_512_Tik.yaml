@@ -19,7 +19,7 @@ model:
     scale_factor: 0.18215
     use_ema: False
     # for training only
-    ckpt_path: D:\cqy\stableSR\logs\2024-10-10T15-15-02_Tik_SFT_256-512\checkpoints\last.ckpt
+    ckpt_path: D:\cqy\stableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
     unfrozen_diff: False
     random_size: False
     time_replace: 1000
@@ -54,7 +54,7 @@ model:
       target: ldm.models.autoencoder.AutoencoderKL
       params:
         # for training only
-        ckpt_path: D:\cqy\stableSR\logs\2024-10-10T15-15-02_Tik_SFT_256-512\checkpoints\last.ckpt
+        ckpt_path: D:\cqy\stableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
         embed_dim: 4
         monitor: val/rec_loss
         ddconfig:
@@ -82,31 +82,28 @@ model:
         layer: "penultimate"
 
     structcond_stage_config:
-      target: ldm.modules.diffusionmodules.openaimodel.EncoderUNetModelWT
+      target: ldm.modules.conv_modules.feature_extraction
       params:
-        image_size: 96
-        in_channels: 4
-        model_channels: 256
-        out_channels: 256
-        num_res_blocks: 2
-        attention_resolutions: [ 4, 2, 1 ]
-        dropout: 0
-        channel_mult: [ 1, 1, 2, 2 ]
-        conv_resample: True
-        dims: 2
-        use_checkpoint: False
-        use_fp16: False
-        num_heads: 4
-        num_head_channels: -1
-        num_heads_upsample: -1
-        use_scale_shift_norm: False
-        resblock_updown: False
-        use_new_attention_order: False
+      image_size: 96
+      in_channels: 4
+      model_channels: 256
+      out_channels: 256
+      num_res_blocks: 2
+      attention_resolutions:  [ 4, 2, 1 ]
+      dropout: 0
+      channel_mult: [ 1, 1, 2, 2 ]
+      conv_resample: true
+      dims: 2
+      use_checkpoint: false
+      use_fp16: false
+      num_heads: 4
+      num_head_channels: -1
+      num_heads_upsample: -1
 
     TrainableCameraInversion_stage_config:
-      target: ldm.modules.trainable_camera_inversion.amplitude.TrainableCameraInversion
+      target: None
       params:
-        initial_mode: calibration
+        initial_mode: None
 
 
 degradation:
@@ -253,7 +250,7 @@ lightning:
         increase_log_steps: False
         log_first_step: False
         log_on_batch_idx: True
-        log_every_n_epochs: 5
+        log_every_n_epochs: 10
 
   trainer:
     benchmark: True

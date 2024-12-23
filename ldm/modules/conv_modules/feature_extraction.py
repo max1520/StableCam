@@ -24,7 +24,7 @@ class Feature_Extraction_Block(TimestepBlock):
         num_res_blocks,
         attention_resolutions,
         dropout=0,
-        channel_mult=(1, 2, 4, 8),
+        channel_mult=(1, 1, 2, 2),
         conv_resample=True,
         dims=2,
         use_checkpoint=False,
