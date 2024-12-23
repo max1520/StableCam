@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="199bbbd7-18eb-4f50-96e5-14559de9feab" name="Changes" comment="2024_1216" />
+    <list default="true" id="9bcd6d11-5d43-46d2-a316-7a8ae2479e91" name="变更" comment="add/update PyCharm run configurations111" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,67 +18,34 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="PUSH_TAGS">
-      <GitPushTagMode>
-        <option name="argument" value="--tags" />
-        <option name="title" value="All" />
-      </GitPushTagMode>
-    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectId" id="2lge71Bn78tZuuh80GQa0hFxyLB" />
+  <component name="ProjectId" id="2lMW9HqqcWMKgWFRSYfnXsavqkc" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "D:/cqy/stableSR/configs/old/autoencoder",
-    "settings.editor.selected.configurable": "debugger.dataViews.python.type.renderers"
+    "last_opened_file_path": "D:/cqy/stableSR/configs/new/stableSRNew",
+    "settings.editor.selected.configurable": "vcs.Git"
   }
 }]]></component>
-  <component name="Push.Settings">
-    <option name="SHOW_DETAILS_PANEL" value="false" />
-  </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\cqy\stableSR\configs\old\autoencoder" />
-      <recent name="D:\cqy\stableSR\configs\old\stableSRdata" />
-      <recent name="D:\cqy\stableSR\configs\stableSRNew" />
-      <recent name="D:\cqy\stableSR" />
-      <recent name="D:\cqy\stableSR\configs\stableSRdata" />
+      <recent name="D:\cqy\stableSR\configs\new/stableSRNew" />
+      <recent name="D:\cqy\StableSR-main\configs\stableSRNew" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.512_phase_ADMM_CFW">
-    <configuration name="512_phase_ADMM_CFW" type="PythonConfigurationType" factoryName="Python" singleton="false">
-      <module name="stableSR" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-        <env name="env:HF_ENDPOINT" value="&quot;https://hf-mirror.com&quot;" />
-        <env name="WANDB_API_KEY" value="5f681482d752e7a8bbfa0f65bbdfa827f728f6bc" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
-      <option name="PARAMETERS" value="--train -b configs\old\autoencoder\autoencoder_kl_64x64x4_resi_paired_phase_ADMM.yaml --gpus 1, --resume D:\cqy\stableSR\logs\2024-12-18T01-27-57_512_phase_ADMM_CFW\checkpoints\last.ckpt --scale_lr False" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python.main: amp;itude_Tik_SFT1">
     <configuration name="FFTlayer" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="stableSR" />
+      <module name="StableSR-main" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -98,19 +65,19 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="SR_Net." type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="stableSR" />
+    <configuration name="SR" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="StableSR-main" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ldm/modules/sr_modules" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="D:\cqy\stableSR\ldm\modules\sr_modules\SR_Net..py" />
+      <option name="SCRIPT_NAME" value="D:\cqy\stableSR\ldm\modules\conv_modules\SR.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -119,34 +86,13 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="amplitude" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="stableSR" />
+    <configuration name="autoencoder" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="StableSR-main" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ldm/modules/trainable_camera_inversion" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ldm/modules/trainable_camera_inversion/amplitude.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="autoencoder" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="stableSR" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-        <env name="CUDA_VISIBLE_DEVICES" value="1" />
+        <env name="CUDA_VISIBLE_DEVICES" value="4" />
       </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ldm/models" />
@@ -162,20 +108,20 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="ddpm" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
-      <module name="stableSR" />
+    <configuration name="feature_extraction" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="StableSR-main" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
+        <env name="CUDA_VISIBLE_DEVICES" value="4" />
         <env name="PYTHONUNBUFFERED" value="1" />
-        <env name="CUDA_VISIBLE_DEVICES" value="3" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ldm/modules/conv_modules" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ldm/models/diffusion/ddpm.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ldm/modules/conv_modules/feature_extraction.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -184,21 +130,20 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="generate_vqgan_data" type="PythonConfigurationType" factoryName="Python" singleton="false" nameIsGenerated="true">
-      <module name="stableSR" />
+    <configuration name="main: amp;itude_Tik_SFT1" type="PythonConfigurationType" factoryName="Python">
+      <module name="StableSR-main" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
-        <env name="CUDA_VISIBLE_DEVICES" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/generate_vqgan_data.py" />
-      <option name="PARAMETERS" value="--config configs\old\stableSRdata\test_data_pairs_phase_ADMM.yaml --ckpt D:\cqy\stableSR\logs\2024-12-11T16-05-03_512_phase_ADMM_SFT\checkpoints\last.ckpt --outdir CFW_evaldata/phase_ADMM --skip_grid --ddpm_steps 200 --base_i 0 --seed 10000" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="--train -b configs/old/stableSRNew/v2-finetune_text_T_amplitude_512_Tik.yaml --gpus 2, --resume D:\cqy\stableSR\logs\2024-10-10T15-15-02_Tik_SFT_256-512\checkpoints\last.ckpt --scale_lr False" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -206,20 +151,20 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="infer_CFW" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
-      <module name="stableSR" />
+    <configuration name="modules" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="StableSR-main" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
-        <env name="PYTHONUNBUFFERED" value="3" />
+        <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ldm/modules/conv_modules" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/infer_CFW.py" />
-      <option name="PARAMETERS" value="-b configs/autoencoder/autoencoder_kl_64x64x4_resi_paired_calibration.yaml --gpus 0, --resume D:\cqy\stableSR\logs\2024-11-12T16-09-54_256-512_calibration_CFW\checkpoints\last.ckpt --scale_lr False" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ldm/modules/conv_modules/modules.py" />
+      <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -228,12 +173,12 @@
       <method v="2" />
     </configuration>
     <configuration name="openaimodel" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="stableSR" />
+      <module name="StableSR-main" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
-        <env name="CUDA_VISIBLE_DEVICES" value="0" />
+        <env name="CUDA_VISIBLE_DEVICES" value="4" />
       </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ldm/modules/diffusionmodules" />
@@ -249,21 +194,20 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="sr_val_ddpm_text_T_vqganfin_old" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
-      <module name="stableSR" />
+    <configuration name="spade" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="StableSR-main" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
-        <env name="PYTHONUNBUFFERED" value="2" />
-        <env name="CUDA_VISIBLE_DEVICES" value="2" />
+        <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ldm/modules" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/sr_val_ddpm_text_T_vqganfin_old.py" />
-      <option name="PARAMETERS" value="--config configs/stableSRNew/v2-finetune_text_T_256-512_Tik.yaml --vqgan_config $PROJECT_DIR$/configs/autoencoder/autoencoder_kl_64x64x4_resi_paired_Tik.yaml --ckpt D:\cqy\stableSR\logs\2024-10-10T15-15-02_Tik_SFT_256-512\checkpoints\choice.ckpt --vqgan_ckpt $PROJECT_DIR$/logs/2024-10-15T14-52-23_Tik_CFW_256-512/checkpoints/last.ckpt --init-img $PROJECT_DIR$/../flat_data/image1k_512_debug/eval_inter_256-512 --outdir results/pred_debug --input_size 512,512 --ddpm_steps 200 --dec_w 0.5 --colorfix_type None" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ldm/modules/spade.py" />
+      <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -272,163 +216,142 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.ddpm" />
-      <item itemvalue="Python.generate_vqgan_data" />
-      <item itemvalue="Python.infer_CFW" />
-      <item itemvalue="Python.512_phase_ADMM_CFW" />
-      <item itemvalue="Python.sr_val_ddpm_text_T_vqganfin_old" />
-      <item itemvalue="Python.amplitude" />
       <item itemvalue="Python.autoencoder" />
+      <item itemvalue="Python.main: amp;itude_Tik_SFT1" />
+      <item itemvalue="Python.SR." />
+      <item itemvalue="Python.feature_extraction" />
       <item itemvalue="Python.FFTlayer" />
+      <item itemvalue="Python.modules" />
       <item itemvalue="Python.openaimodel" />
-      <item itemvalue="Python.SR_Net." />
+      <item itemvalue="Python.spade" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.spade" />
+        <item itemvalue="Python.feature_extraction" />
+        <item itemvalue="Python.modules" />
         <item itemvalue="Python.openaimodel" />
-        <item itemvalue="Python.SR_Net." />
         <item itemvalue="Python.FFTlayer" />
-        <item itemvalue="Python.amplitude" />
-        <item itemvalue="Python.autoencoder" />
       </list>
     </recent_temporary>
   </component>
-  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="应用程序级" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
-    <task active="true" id="Default" summary="Default task">
-      <changelist id="199bbbd7-18eb-4f50-96e5-14559de9feab" name="Changes" comment="" />
-      <created>1725605976169</created>
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="9bcd6d11-5d43-46d2-a316-7a8ae2479e91" name="变更" comment="" />
+      <created>1724990272526</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1725605976169</updated>
+      <updated>1724990272526</updated>
     </task>
-    <task id="LOCAL-00001" summary="3090">
-      <created>1728116951143</created>
+    <task id="LOCAL-00001" summary="2024_1212_from74">
+      <created>1733983204752</created>
       <option name="number" value="00001" />
       <option name="presentableId" value="LOCAL-00001" />
       <option name="project" value="LOCAL" />
-      <updated>1728116951143</updated>
+      <updated>1733983204752</updated>
     </task>
-    <task id="LOCAL-00002" summary="3090">
-      <created>1730703077324</created>
+    <task id="LOCAL-00002" summary="2024_1219_from74">
+      <created>1734597958652</created>
       <option name="number" value="00002" />
       <option name="presentableId" value="LOCAL-00002" />
       <option name="project" value="LOCAL" />
-      <updated>1730703077324</updated>
+      <updated>1734597958652</updated>
     </task>
-    <task id="LOCAL-00003" summary="3090">
-      <created>1733832815765</created>
+    <task id="LOCAL-00003" summary="2024_1219_from74">
+      <created>1734604352108</created>
       <option name="number" value="00003" />
       <option name="presentableId" value="LOCAL-00003" />
       <option name="project" value="LOCAL" />
-      <updated>1733832815765</updated>
+      <updated>1734604352108</updated>
     </task>
-    <task id="LOCAL-00004" summary="2024_1210">
-      <created>1733833524823</created>
+    <task id="LOCAL-00004" summary="2024_1220_from74">
+      <created>1734699440396</created>
       <option name="number" value="00004" />
       <option name="presentableId" value="LOCAL-00004" />
       <option name="project" value="LOCAL" />
-      <updated>1733833524824</updated>
+      <updated>1734699440396</updated>
     </task>
-    <task id="LOCAL-00005" summary="2024_1210">
-      <created>1733833902788</created>
+    <task id="LOCAL-00005" summary="add/update PyCharm run configurations">
+      <created>1734937926533</created>
       <option name="number" value="00005" />
       <option name="presentableId" value="LOCAL-00005" />
       <option name="project" value="LOCAL" />
-      <updated>1733833902788</updated>
+      <updated>1734937926533</updated>
     </task>
-    <task id="LOCAL-00006" summary="2024_1216">
-      <created>1734326131209</created>
+    <task id="LOCAL-00006" summary="add/update PyCharm run configurations">
+      <created>1734943622007</created>
       <option name="number" value="00006" />
       <option name="presentableId" value="LOCAL-00006" />
       <option name="project" value="LOCAL" />
-      <updated>1734326131209</updated>
+      <updated>1734943622007</updated>
     </task>
-    <task id="LOCAL-00007" summary="2024_1216">
-      <created>1734334427090</created>
+    <task id="LOCAL-00007" summary="add/update PyCharm run configurations">
+      <created>1734947328664</created>
       <option name="number" value="00007" />
       <option name="presentableId" value="LOCAL-00007" />
       <option name="project" value="LOCAL" />
-      <updated>1734334427090</updated>
+      <updated>1734947328664</updated>
     </task>
-    <task id="LOCAL-00008" summary="2024_1216">
-      <created>1734700155470</created>
+    <task id="LOCAL-00008" summary="add/update PyCharm run configurations111">
+      <created>1734947496705</created>
       <option name="number" value="00008" />
       <option name="presentableId" value="LOCAL-00008" />
       <option name="project" value="LOCAL" />
-      <updated>1734700155470</updated>
+      <updated>1734947496705</updated>
     </task>
     <option name="localTasksCounter" value="9" />
     <servers />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ID_ORDER">
+      <list>
+        <option value="Default.Root" />
+        <option value="Default.Author" />
+        <option value="Default.Date" />
+        <option value="Default.Subject" />
+        <option value="Space.CommitStatus" />
+      </list>
+    </option>
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
         <entry key="MAIN">
           <value>
-            <State>
-              <option name="FILTERS">
-                <map>
-                  <entry key="branch">
-                    <value>
-                      <list>
-                        <option value="master" />
-                      </list>
-                    </value>
-                  </entry>
-                </map>
-              </option>
-            </State>
+            <State />
           </value>
         </entry>
       </map>
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="3090" />
-    <MESSAGE value="2024_1210" />
-    <MESSAGE value="2024_1216" />
-    <option name="LAST_COMMIT_MESSAGE" value="2024_1216" />
+    <MESSAGE value="2024_1212_from74" />
+    <MESSAGE value="2024_1219_from74" />
+    <MESSAGE value="2024_1220_from74" />
+    <MESSAGE value="add/update PyCharm run configurations" />
+    <MESSAGE value="add/update PyCharm run configurations111" />
+    <option name="LAST_COMMIT_MESSAGE" value="add/update PyCharm run configurations111" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/basicsr/data/realesrgan_paired_dataset.py</url>
-          <line>154</line>
-          <option name="timeStamp" value="46" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/scripts/sr_val_ddpm_text_T_vqganfin_old.py</url>
-          <line>322</line>
-          <option name="timeStamp" value="91" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ldm/models/diffusion/ddpm.py</url>
-          <line>3591</line>
-          <option name="timeStamp" value="101" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ldm/models/diffusion/ddpm.py</url>
-          <line>1796</line>
-          <option name="timeStamp" value="113" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ldm/modules/diffusionmodules/openaimodel.py</url>
-          <line>1593</line>
-          <option name="timeStamp" value="115" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/scripts/generate_vqgan_data.py</url>
-          <line>307</line>
-          <option name="timeStamp" value="116" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ldm/modules/diffusionmodules/openaimodel.py</url>
-          <line>1533</line>
-          <option name="timeStamp" value="117" />
+          <line>1592</line>
+          <option name="timeStamp" value="5" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="PythonConfigurationType">
+        <watch expression="self.input_blocks" />
+        <watch expression="module" language="Python" />
+        <watch expression="result_list" language="Python" />
+        <watch expression="self.middle_block" language="Python" />
+        <watch expression="self.fea_tran" />
+        <watch expression="self.up" language="Python" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>
