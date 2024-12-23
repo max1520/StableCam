@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9bcd6d11-5d43-46d2-a316-7a8ae2479e91" name="变更" comment="add/update PyCharm run configurations">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/configs/old/stableSRNew/v2-finetune_text_T_amplitude_512_Tik.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/configs/old/stableSRNew/v2-finetune_text_T_amplitude_512_Tik.yaml" afterDir="false" />
-    </list>
+    <list default="true" id="9bcd6d11-5d43-46d2-a316-7a8ae2479e91" name="变更" comment="1123" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -191,7 +188,14 @@
       <option name="project" value="LOCAL" />
       <updated>1734948603046</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="1123">
+      <created>1734949763594</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1734949763594</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.History.Properties">
@@ -222,7 +226,8 @@
     <MESSAGE value="2024_1220_from74" />
     <MESSAGE value="add/update PyCharm run configurations111" />
     <MESSAGE value="add/update PyCharm run configurations" />
-    <option name="LAST_COMMIT_MESSAGE" value="add/update PyCharm run configurations" />
+    <MESSAGE value="1123" />
+    <option name="LAST_COMMIT_MESSAGE" value="1123" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
