@@ -92,8 +92,8 @@
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
-        <env name="HF_ENDPOINT" value="https://hf-mirror.com" />
         <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="HF_ENDPOINT" value="https://hf-mirror.com" />
         <env name="WANDB_API_KEY" value="5f681482d752e7a8bbfa0f65bbdfa827f728f6bc" />
       </envs>
       <option name="SDK_HOME" value="" />
