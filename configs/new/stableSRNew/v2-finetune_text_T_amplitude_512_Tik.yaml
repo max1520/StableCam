@@ -82,7 +82,7 @@ model:
         layer: "penultimate"
 
     structcond_stage_config:
-      target: ldm.modules.conv_modules.feature_extraction
+      target: ldm.modules.conv_modules.feature_extraction.Feature_Extraction
       params:
       image_size: 96
       in_channels: 4
