@@ -9,8 +9,8 @@ weights/
 stable-diffusion-2-1-base/
 
 *.DS_Store
-#.idea/*
-#!.idea/workspace.xml
+.idea/*
+!.idea/workspace.xml
 
 # ignored files
 version.py
