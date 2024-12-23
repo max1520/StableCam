@@ -11,7 +11,7 @@ from ldm.modules.diffusionmodules.util import (
     normalization,
     timestep_embedding,
 )
-class Feature_Extraction_Block(TimestepBlock):
+class Feature_Extraction(TimestepBlock):
     '''
     get strcuture_cond
     '''
@@ -159,7 +159,7 @@ class Feature_Extraction_Block(TimestepBlock):
 
 if __name__ == '__main__':
     device = torch.device('cuda')
-    model = Feature_Extraction_Block(
+    model = Feature_Extraction(
         image_size=96,
         in_channels=4,
         model_channels=256,
