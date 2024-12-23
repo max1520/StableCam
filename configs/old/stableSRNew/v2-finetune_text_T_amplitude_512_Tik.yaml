@@ -104,9 +104,9 @@ model:
         use_new_attention_order: False
 
     TrainableCameraInversion_stage_config:
-      target: ldm.modules.trainable_camera_inversion.amplitude.TrainableCameraInversion
+      target: None
       params:
-        initial_mode: calibration
+        initial_mode: None
 
 
 degradation:
@@ -135,7 +135,7 @@ degradation:
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 1
+    batch_size: 8
     num_workers: 6
     wrap: false
     train:
@@ -253,7 +253,7 @@ lightning:
         increase_log_steps: False
         log_first_step: False
         log_on_batch_idx: True
-        log_every_n_epochs: 5
+        log_every_n_epochs: 10
 
   trainer:
     benchmark: True
