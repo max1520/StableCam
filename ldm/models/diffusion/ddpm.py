@@ -317,8 +317,23 @@ class DDPM(pl.LightningModule):
                 if k.startswith(ik):
                     print("Deleting key {} from state_dict.".format(k))
                     del sd[k]
-        missing, unexpected = self.load_state_dict(sd, strict=False) if not only_model else self.model.load_state_dict(
-            sd, strict=False)
+
+        # 过滤掉形状不匹配的参数
+        current_state_dict = self.state_dict()
+        filtered_state_dict = {
+            k: v for k, v in sd.items()
+            if k in current_state_dict and v.size() == current_state_dict[k].size()
+        }
+        # 打印被忽略的键
+        ignored_keys = set(sd.keys()) - set(filtered_state_dict.keys())
+        if ignored_keys:
+            print(f"Ignored keys due to shape mismatch: {ignored_keys}")
+        # 加载过滤后的参数
+        if not only_model:
+            missing, unexpected = self.load_state_dict(filtered_state_dict, strict=False)
+        else:
+            missing, unexpected = self.model.load_state_dict(filtered_state_dict, strict=False)
+
         print('<<<<<<<<<<<<>>>>>>>>>>>>>>>')
         print(f"Restored from {path} with {len(missing)} missing and {len(unexpected)} unexpected keys")
         if len(missing) > 0:
@@ -498,10 +513,10 @@ class DDPM(pl.LightningModule):
             lr = self.optimizers().param_groups[0]['lr']
             self.log('lr_abs', lr, prog_bar=True, logger=True, on_step=True, on_epoch=False)
 
-        if self.is_trainable_camera_inversion == True:
-            for name, param in self.TrainableCameraInversion_stage_model.named_parameters():
-                if "PhiL" in name:  # 筛选包含 "PhiL" 的参数
-                    print(f"{name}: requires_grad={param.requires_grad}, grad={param.grad}")
+        # if self.is_trainable_camera_inversion == True:
+        #     for name, param in self.TrainableCameraInversion_stage_model.named_parameters():
+        #         if "PhiL" in name:  # 筛选包含 "PhiL" 的参数
+        #             print(f"{name}: requires_grad={param.requires_grad}, grad={param.grad}")
 
         return loss
 

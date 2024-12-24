@@ -4,11 +4,12 @@ import torch.nn.functional as F
 import scipy.io as sio
 
 class TrainableCameraInversion(nn.Module):
-    def __init__(self, initial_mode=None):
+    def __init__(self, initial_mode=None, image_size=512):
         super().__init__()
 
         # 初始化模式和参数
         self.initial_mode = initial_mode
+        self.scale = image_size // 512
 
         if self.initial_mode not in ['Tikhonov', 'calibration', 'random']:
             raise ValueError(
@@ -16,8 +17,8 @@ class TrainableCameraInversion(nn.Module):
 
         if self.initial_mode == 'calibration':
             # 加载 Phi 矩阵
-            Phil = sio.loadmat(f"D:/cqy/flat_data/initial_matrixs_256/Phi_rec_left_256.mat")
-            Phir = sio.loadmat(f"D:/cqy/flat_data/initial_matrixs_256/Phi_rec_right_256.mat")
+            Phil = sio.loadmat(f"D:/cqy/flat_data/1217/initial_matrix/{image_size}/Phi_rec_left.mat")
+            Phir = sio.loadmat(f"D:/cqy/flat_data/1217/initial_matrix/{image_size}/Phi_rec_right.mat")
 
             # 获取矩阵大小
             self.height_left, self.width_left = Phil['Phi_rec_left'].shape
@@ -47,8 +48,9 @@ class TrainableCameraInversion(nn.Module):
         else:
             raise ValueError("Expected error in forward")
 
-        # 使用双立方插值将尺寸调整到 (512, 512)
-        measure = F.interpolate(measure, size=(512, 512), mode='bicubic', align_corners=False)
+        if self.scale == 2:
+            # 使用双立方插值将尺寸调整到 (512, 512)
+            measure = F.interpolate(measure, size=(512, 512), mode='bicubic', align_corners=False)
 
         return measure
 

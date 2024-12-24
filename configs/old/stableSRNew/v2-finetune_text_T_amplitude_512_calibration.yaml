@@ -134,7 +134,7 @@ degradation:
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 8
+    batch_size: 4
     num_workers: 6
     wrap: false
     train:
@@ -142,8 +142,8 @@ data:
       params:
         phase: train
         queue_size: 180
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/measure'
+        dataroot_gt: 'D:/cqy/flat_data/1217/label_512'
+        dataroot_lq: 'D:/cqy/flat_data/1217/measure_resize'
 
         crop_size: 512
         io_backend:
@@ -174,8 +174,8 @@ data:
       target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
         phase: validation
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_measure'
+        dataroot_gt: 'D:/cqy/flat_data/1217/eval/label_512'
+        dataroot_lq: 'D:/cqy/flat_data/1217/eval/measure_resize'
         crop_size: 512
         io_backend:
           type: disk
@@ -211,8 +211,8 @@ test_data:
     test:
       target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_measure'
+        dataroot_gt: 'D:/cqy/flat_data/1217/eval/label_512'
+        dataroot_lq: 'D:/cqy/flat_data/1217/eval/measure_resize'
         crop_size: 512
         io_backend:
           type: disk
@@ -252,7 +252,7 @@ lightning:
         increase_log_steps: False
         log_first_step: False
         log_on_batch_idx: True
-        log_every_n_epochs: 5
+        log_every_n_epochs: 10
 
   trainer:
     benchmark: True
