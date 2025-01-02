@@ -19,7 +19,7 @@ model:
     scale_factor: 0.18215
     use_ema: False
     # for training only
-    ckpt_path: D:\cqy\stableSR\logs\2024-11-07T20-06-40_256-512_calibration_SFT\checkpoints\last.ckpt
+    ckpt_path: D:\cqy\stableSR\logs\2024-12-24T13-44-44_amplitude_512_calibration_SFT\checkpoints\last.ckpt
     unfrozen_diff: False
     random_size: False
     time_replace: 1000
@@ -54,7 +54,7 @@ model:
       target: ldm.models.autoencoder.AutoencoderKL
       params:
         # for training only
-        ckpt_path: D:\cqy\stableSR\logs\2024-11-07T20-06-40_256-512_calibration_SFT\checkpoints\last.ckpt
+        ckpt_path: D:\cqy\stableSR\logs\2024-12-24T13-44-44_amplitude_512_calibration_SFT\checkpoints\last.ckpt
         embed_dim: 4
         monitor: val/rec_loss
         ddconfig:
@@ -106,31 +106,8 @@ model:
     TrainableCameraInversion_stage_config:
       target: ldm.modules.trainable_camera_inversion.amplitude.TrainableCameraInversion
       params:
-        initial_mode: calibration
+        initial_mode: random
         image_size: 512
-
-degradation:
-  # the first degradation process
-  resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
-  resize_range: [0.3, 1.5]
-  gaussian_noise_prob: 0.5
-  noise_range: [1, 15]
-  poisson_scale_range: [0.05, 2.0]
-  gray_noise_prob: 0.4
-  jpeg_range: [60, 95]
-
-  # the second degradation process
-  second_blur_prob: 0.5
-  resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
-  resize_range2: [0.6, 1.2]
-  gaussian_noise_prob2: 0.5
-  noise_range2: [1, 12]
-  poisson_scale_range2: [0.05, 1.0]
-  gray_noise_prob2: 0.4
-  jpeg_range2: [60, 100]
-
-  gt_size: 512
-  no_degradation_prob: 0.01
 
 data:
   target: main.DataModuleFromConfig

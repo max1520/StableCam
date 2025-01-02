@@ -18,7 +18,7 @@ model:
     monitor: val/loss_simple_ema
     scale_factor: 0.18215
     use_ema: False
-    ckpt_path: D:\cqy\stableSR\logs\2024-10-10T15-15-02_Tik_SFT_256-512\checkpoints\choice.ckpt
+#    ckpt_path: D:\cqy\stableSR\logs\2024-11-07T20-06-40_256-512_calibration_SFT\checkpoints\last.ckpt
     unfrozen_diff: False
     random_size: False
     time_replace: 1000
@@ -27,8 +27,8 @@ model:
     #P2 weighting
     p2_gamma: ~
     p2_k: ~
-    #
-    is_trainable_camera_inversion: False
+    # trainable_camera_inversion
+    is_trainable_camera_inversion: True
 
     unet_config:
       target: ldm.modules.diffusionmodules.openaimodel.UNetModelDualcondV2
@@ -52,7 +52,7 @@ model:
     first_stage_config:
       target: ldm.models.autoencoder.AutoencoderKL
       params:
-        ckpt_path: D:\cqy\stableSR\logs\2024-10-10T15-15-02_Tik_SFT_256-512\checkpoints\choice.ckpt
+        ckpt_path: D:\cqy\stableSR\logs\2024-12-23T19-25-02_amplitude_512_Tik_SFT\checkpoints\last.ckpt
         embed_dim: 4
         monitor: val/rec_loss
         ddconfig:
@@ -104,98 +104,10 @@ model:
     TrainableCameraInversion_stage_config:
       target: ldm.modules.trainable_camera_inversion.amplitude.TrainableCameraInversion
       params:
-        initial_mode: calibration
+        initial_mode: random
+        image_size: 512
 
-degradation:
-  # the first degradation process
-  resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
-  resize_range: [0.3, 1.5]
-  gaussian_noise_prob: 0.5
-  noise_range: [1, 15]
-  poisson_scale_range: [0.05, 2.0]
-  gray_noise_prob: 0.4
-  jpeg_range: [60, 95]
 
-  # the second degradation process
-  second_blur_prob: 0.5
-  resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
-  resize_range2: [0.6, 1.2]
-  gaussian_noise_prob2: 0.5
-  noise_range2: [1, 12]
-  poisson_scale_range2: [0.05, 1.0]
-  gray_noise_prob2: 0.4
-  jpeg_range2: [60, 100]
-
-  gt_size: 512
-
-data:
-  target: main.DataModuleFromConfig
-  params:
-    batch_size: 4
-    num_workers: 6
-    wrap: false
-    train:
-      target: basicsr.data.realesrgan_dataset.RealESRGANPairedDataset
-      params:
-        queue_size: 180
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_256-512'
-        num_face: 2000
-        crop_size: 512
-        io_backend:
-          type: disk
-
-        blur_kernel_size: 21
-        kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
-        kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
-        sinc_prob: 0.1
-        blur_sigma: [0.2, 1.5]
-        betag_range: [0.5, 2.0]
-        betap_range: [1, 1.5]
-
-        blur_kernel_size2: 11
-        kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
-        kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
-        sinc_prob2: 0.1
-        blur_sigma2: [0.2, 1.0]
-        betag_range2: [0.5, 2.0]
-        betap_range2: [1, 1.5]
-
-        final_sinc_prob: 0.8
-
-        gt_size: 512
-        use_hflip: True
-        use_rot: False
-    validation:
-      target: basicsr.data.realesrgan_dataset.RealESRGANPairedDataset
-      params:
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_256-512'
-        crop_size: 512
-        io_backend:
-          type: disk
-
-        blur_kernel_size: 21
-        kernel_list: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
-        kernel_prob: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
-        sinc_prob: 0.1
-        blur_sigma: [0.2, 1.5]
-        betag_range: [0.5, 2.0]
-        betap_range: [1, 1.5]
-
-        blur_kernel_size2: 11
-        kernel_list2: ['iso', 'aniso', 'generalized_iso', 'generalized_aniso', 'plateau_iso', 'plateau_aniso']
-        kernel_prob2: [0.45, 0.25, 0.12, 0.03, 0.12, 0.03]
-        sinc_prob2: 0.1
-        blur_sigma2: [0.2, 1.0]
-        betag_range2: [0.5, 2.0]
-        betap_range2: [1, 1.5]
-
-        final_sinc_prob: 0.8
-
-        gt_size: 512
-        use_hflip: True
-        use_rot: False
 
 test_data:
   target: main.DataModuleFromConfig
@@ -206,8 +118,8 @@ test_data:
     test:
       target: basicsr.data.realesrgan_dataset.RealESRGANPairedDataset
       params:
-        dataroot_gt: 'D:/cqy/flat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/flat_data/image1k_512/eval_inter_256-512'
+        dataroot_gt: 'D:/cqy/flat_data/1217/eval/label_512'
+        dataroot_lq: 'D:/cqy/flat_data/1217/eval/measure_resize'
         num_face: 2000
         crop_size: 512
         mul_num: 10

@@ -26,6 +26,25 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="torchvision.transforms.functional_tensor")
 
 
+def load_model_from_config(config, ckpt, verbose=False):
+    print(f"Loading model from {ckpt}")
+    pl_sd = torch.load(ckpt, map_location="cpu")
+    if "global_step" in pl_sd:
+        print(f"Global Step: {pl_sd['global_step']}")
+    sd = pl_sd["state_dict"]
+    model = instantiate_from_config(config.model)
+    m, u = model.load_state_dict(sd, strict=False)
+    if len(m) > 0 and verbose:
+        print("missing keys:")
+        print(m)
+    if len(u) > 0 and verbose:
+        print("unexpected keys:")
+        print(u)
+
+    model.cuda()
+    model.eval()
+    return model
+
 def get_parser(**parser_kwargs):
     def str2bool(v):
         if isinstance(v, bool):
@@ -55,6 +74,12 @@ def get_parser(**parser_kwargs):
         default="",
         nargs="?",
         help="resume from logdir or checkpoint in logdir",
+    )
+    parser.add_argument(
+        "--ckpt",
+        type=str,
+        default="models/ldm/stable-diffusion-v1/model.ckpt",
+        help="path to checkpoint of model",
     )
     parser.add_argument(
         "-b",
@@ -417,22 +442,22 @@ if __name__ == "__main__":
 
     opt, unknown = parser.parse_known_args()
 
-    if opt.resume:
-        if not os.path.exists(opt.resume):
-            raise ValueError(f"Cannot find {opt.resume}")
-        if os.path.isfile(opt.resume):
-            logdir = "/".join(opt.resume.replace("\\", "/").split("/")[:-2])
-            ckpt = opt.resume
-        else:
-            assert os.path.isdir(opt.resume), opt.resume
-            logdir = opt.resume.rstrip("/")
-            ckpt = os.path.join(logdir, "checkpoints", "last.ckpt")
-
-        opt.resume_from_checkpoint = ckpt
-        base_configs = sorted(glob.glob(os.path.join(logdir, "configs/*.yaml")))
-        opt.base = base_configs + opt.base
-    else:
-        raise ValueError("You must specify `--resume` to load a checkpoint for testing.")
+    # if opt.resume:
+    #     if not os.path.exists(opt.resume):
+    #         raise ValueError(f"Cannot find {opt.resume}")
+    #     if os.path.isfile(opt.resume):
+    #         logdir = "/".join(opt.resume.replace("\\", "/").split("/")[:-2])
+    #         ckpt = opt.resume
+    #     else:
+    #         assert os.path.isdir(opt.resume), opt.resume
+    #         logdir = opt.resume.rstrip("/")
+    #         ckpt = os.path.join(logdir, "checkpoints", "last.ckpt")
+    #
+    #     opt.resume_from_checkpoint = ckpt
+    #     base_configs = sorted(glob.glob(os.path.join(logdir, "configs/*.yaml")))
+    #     opt.base = base_configs + opt.base
+    # else:
+    #     raise ValueError("You must specify `--resume` to load a checkpoint for testing.")
 
     seed_everything(opt.seed)
 
@@ -450,7 +475,8 @@ if __name__ == "__main__":
     trainer = Trainer.from_argparse_args(trainer_opt)
 
     # Load model
-    model = instantiate_from_config(config.model)
+    model = load_model_from_config(config, f"{opt.ckpt}")
+    # model = instantiate_from_config(config.model)
     model.configs = config
 
     # Load data

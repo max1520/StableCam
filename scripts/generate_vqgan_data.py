@@ -397,7 +397,7 @@ def main():
                         t = repeat(torch.tensor([999]), '1 -> b', b=init_image.size(0))
                         t = t.to(device).long()
                         x_T = model_ori.q_sample(x_start=init_latent, t=t, noise=noise)
-                        # x_T = None
+                        x_T = None
 
                         samples, _ = model.sample(cond=semantic_c, struct_cond=init_latent, batch_size=init_image.size(0), timesteps=opt.ddpm_steps, time_replace=opt.ddpm_steps, x_T=x_T, return_intermediates=True, adain_fea=None)
 

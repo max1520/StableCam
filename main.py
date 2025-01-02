@@ -297,7 +297,7 @@ class SetupCallback(Callback):
 class ImageLogger(Callback):
     def __init__(self, batch_frequency, max_images, clamp=True, increase_log_steps=True,
                  rescale=True, disabled=False, log_on_batch_idx=False, log_first_step=False,
-                 log_images_kwargs=None, log_every_n_epochs=5):
+                 log_images_kwargs=None, log_every_n_epochs=10):
         super().__init__()
         self.rescale = rescale
         self.batch_freq = batch_frequency
@@ -361,14 +361,14 @@ class ImageLogger(Callback):
             logger_log_images = self.logger_log_images.get(logger, lambda *args, **kwargs: None)
             logger_log_images(pl_module, images, pl_module.global_step, split)
 
-            if is_train:
-                pl_module.train()
-
             # 记录 PSNR 和 SSIM
             if hasattr(pl_module, "log_metrics") and callable(pl_module.log_metrics):
                 metrics = pl_module.log_metrics(batch, split=split, **self.log_images_kwargs)
                 pl_module.log('avg_psnr', metrics['avg_psnr'], prog_bar=True, logger=True, on_step=True, on_epoch=False)
                 pl_module.log('avg_ssim', metrics['avg_ssim'], prog_bar=True, logger=True, on_step=True, on_epoch=False)
+
+            if is_train:
+                pl_module.train()
 
     def check_frequency(self, pl_module, check_idx):
         if check_idx == 0 and (pl_module.current_epoch % self.log_every_n_epochs == 0):

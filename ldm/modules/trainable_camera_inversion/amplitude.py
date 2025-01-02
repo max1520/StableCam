@@ -30,9 +30,24 @@ class TrainableCameraInversion(nn.Module):
             self.PhiL = nn.Parameter(torch.from_numpy(Phil['Phi_rec_left']).float().to('cuda'))
             self.PhiR = nn.Parameter(torch.from_numpy(Phir['Phi_rec_right']).float().to('cuda'))
 
+        if self.initial_mode == 'random':
+            # 加载 Phi 矩阵
+            Phil = sio.loadmat(f"D:/cqy/flat_data/1217/initial_matrix/toplize_{image_size}/Phi_rec_left.mat")
+            Phir = sio.loadmat(f"D:/cqy/flat_data/1217/initial_matrix/toplize_{image_size}/Phi_rec_right.mat")
+
+            # 获取矩阵大小
+            self.height_left, self.width_left = Phil['Phi_rec_left'].shape
+            self.height_right, self.width_right = Phir['Phi_rec_right'].shape
+            print(f"Left matrix size: Height = {self.height_left}, Width = {self.width_left}")
+            print(f"Right matrix size: Height = {self.height_right}, Width = {self.width_right}")
+
+            # 将矩阵转换为 nn.Parameter，方便在训练时更新
+            self.PhiL = nn.Parameter(torch.from_numpy(Phil['Phi_rec_left']).float().to('cuda'))
+            self.PhiR = nn.Parameter(torch.from_numpy(Phir['Phi_rec_right']).float().to('cuda'))
+
     def forward(self, measure):
         # 如果模式是 'calibration'，则执行计算
-        if self.initial_mode == 'calibration':
+        if self.initial_mode == 'calibration' or self.initial_mode == 'random':
             # 处理第一个通道
             measure_channel_0 = measure[:, 0, :, :]
 
@@ -56,7 +71,7 @@ class TrainableCameraInversion(nn.Module):
 
 if __name__ == '__main__':
     device = torch.device('cuda')
-    trainablecamerainversion = TrainableCameraInversion(initial_mode='calibration').to(device)
+    trainablecamerainversion = TrainableCameraInversion(initial_mode='random').to(device)
     x = torch.rand(1,3,540,720).to(device)
     y = trainablecamerainversion(x)
     print(y.shape)  #(1,3,512,512)
