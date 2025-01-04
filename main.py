@@ -169,12 +169,13 @@ def worker_init_fn(_):
 class DataModuleFromConfig(pl.LightningDataModule):
     def __init__(self, batch_size, train=None, validation=None, test=None, predict=None,
                  wrap=False, num_workers=None, shuffle_test_loader=False, use_worker_init_fn=False,
-                 shuffle_val_dataloader=False):
+                 shuffle_val_dataloader=False, mix_train=False):
         super().__init__()
         self.batch_size = batch_size
         self.dataset_configs = dict()
         self.num_workers = num_workers if num_workers is not None else batch_size * 2
         self.use_worker_init_fn = use_worker_init_fn
+        self.mix_train = mix_train
         if train is not None:
             self.dataset_configs["train"] = train
             self.train_dataloader = self._train_dataloader
@@ -202,7 +203,8 @@ class DataModuleFromConfig(pl.LightningDataModule):
                 self.datasets[k] = WrappedDataset(self.datasets[k])
 
     def _train_dataloader(self):
-        self.datasets["train"] = ConcatDataset([self.datasets["train"], self.datasets["validation"]])
+        if self.mix_train:
+            self.datasets["train"] = ConcatDataset([self.datasets["train"], self.datasets["validation"]])
         is_iterable_dataset = isinstance(self.datasets['train'], Txt2ImgIterableBaseDataset)
         if is_iterable_dataset or self.use_worker_init_fn:
             init_fn = worker_init_fn

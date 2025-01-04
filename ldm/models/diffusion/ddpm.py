@@ -1992,7 +1992,7 @@ class LatentDiffusionSRTextWT(DDPM):
         return [lq, gt]
 
     def get_input(self, batch, k=None, return_first_stage_outputs=False, force_c_encode=False,
-              cond_key=None, return_original_cond=False, bs=None, val=False, text_cond=[''], return_gt=False, resize_lq=False):
+              cond_key=None, return_original_cond=False, bs=None, val=False, text_cond=[''], return_gt=False, resize_lq=True):
         if not hasattr(self, 'usm_sharpener'):
             usm_sharpener = USMSharp().cuda()  # do usm sharpening#
 
@@ -2640,8 +2640,9 @@ class LatentDiffusionSRTextWT(DDPM):
         if self.is_sr_net:
             im_lq_sr = self.sr_stage_model(im_lq)
             loss_sr = self.get_loss(im_lq_sr, im_gt, mean=False).mean(dim=(1, 2, 3))
+            loss_sr = self.sr_stage_model.loss_sr_weight * loss_sr.mean()
             loss_dict.update({f'{prefix}/loss_sr': loss_sr})
-            loss += (self.sr_stage_model.loss_sr_weight * loss_sr)
+            loss += loss_sr
 
         loss_dict.update({f'{prefix}/loss': loss})
 
@@ -3598,7 +3599,7 @@ class Layout2ImgDiffusion(LatentDiffusion):
 if __name__ == '__main__':
     from omegaconf import OmegaConf
 
-    config_path = 'configs/stableSRNew/v2-finetune_text_T_256-512_calibration.yaml'
+    config_path = 'configs/new/stableSRNew/v2-finetune_text_T_amplitude_128_Tik.yaml'
     config = OmegaConf.load(config_path)
 
     # latentdiffusionsrtextwt = LatentDiffusionSRTextWT(opt)
@@ -3606,18 +3607,18 @@ if __name__ == '__main__':
     model = instantiate_from_config(config.model)
     model.configs = config
     # 将模型移到 GPU
-    # model = model.cuda()
-    print(model.TrainableCameraInversion_stage_model.PhiL)
+    model = model.cuda()
+    # print(model.TrainableCameraInversion_stage_model.PhiL)
 
-    # lq = torch.rand(1,3,540,720)
-    # gt = torch.rand(1,3,512,512)
-    # batch = {
-    #     'lq': lq,
-    #     'gt': gt
-    # }
-    #
-    # loss = model.shared_step(batch)
-    # print(loss)
+    lq = torch.rand(1,3,512,512).cuda()
+    gt = torch.rand(1,3,512,512).cuda()
+    batch = {
+        'lq': lq,
+        'gt': gt
+    }
+
+    loss = model.shared_step(batch)
+    print(loss)
 
     # metric = model.log_metric(batch, N=2, sample=True)
 

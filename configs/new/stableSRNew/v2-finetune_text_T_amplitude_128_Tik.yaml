@@ -110,6 +110,7 @@ model:
       target: ldm.modules.conv_modules.SR.SR_Block
       params:
         in_chans: 3
+        out_chans: 3
         channels: 64
         num_blocks: 2
         loss_sr_weight: 1.0
@@ -120,16 +121,17 @@ model:
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 1
+    batch_size: 4
     num_workers: 6
     wrap: false
+    mix_train: True
     train:
       target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
         phase: train
         queue_size: 180
         dataroot_gt: 'D:/cqy/flat_data/1217/label_512'
-        dataroot_lq: 'D:/cqy/flat_data/1217/inter_512'
+        dataroot_lq: 'D:/cqy/flat_data/1217/inter_128'
 
         crop_size: 512
         io_backend:
@@ -161,7 +163,7 @@ data:
       params:
         phase: validation
         dataroot_gt: 'D:/cqy/flat_data/1217/eval/label_512'
-        dataroot_lq: 'D:/cqy/flat_data/1217/eval/inter_512'
+        dataroot_lq: 'D:/cqy/flat_data/1217/eval/inter_128'
         crop_size: 512
         io_backend:
           type: disk
@@ -198,7 +200,7 @@ test_data:
       target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
         dataroot_gt: 'D:/cqy/flat_data/1217/eval/label_512'
-        dataroot_lq: 'D:/cqy/flat_data/1217/eval/inter_512'
+        dataroot_lq: 'D:/cqy/flat_data/1217/eval/inter_128'
         crop_size: 512
         io_backend:
           type: disk
@@ -244,7 +246,7 @@ lightning:
     benchmark: True
     max_steps: 800000
     accumulate_grad_batches: 4
-#    limit_train_batches: 1
-#    limit_test_batches: 1
+#    limit_train_batches: 0.01
+#    limit_test_batches: 0.01
 #    limit_val_batches: 1
 

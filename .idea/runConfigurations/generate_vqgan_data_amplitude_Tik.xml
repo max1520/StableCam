@@ -13,7 +13,7 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/generate_vqgan_data.py" />
-    <option name="PARAMETERS" value="--config configs/old/stableSRdata/test_data_pairs_amplitude_Tik.yaml --ckpt D:\cqy\stableSR\logs\2024-12-23T19-25-02_amplitude_512_Tik_SFT\checkpoints\last.ckpt --outdir CFW_data/eval_data/amplitude_512_Tik --skip_grid --ddpm_steps 200 --base_i 0 --seed 10000" />
+    <option name="PARAMETERS" value="--config configs/old/stableSRdata/test_data_pairs_amplitude_Tik.yaml --ckpt D:\cqy\stableSR\logs\2024-12-23T19-25-02_amplitude_512_Tik_SFT\checkpoints\last.ckpt --outdir CFW_data/training_data/amplitude_512_Tik --skip_grid --ddpm_steps 200 --base_i 0 --seed 10000" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
