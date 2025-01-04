@@ -251,7 +251,7 @@ def main():
 		cur_image = load_img(os.path.join(opt.init_img, item)).to(device)
 		cur_image = transform(cur_image)
 		if model.is_trainable_camera_inversion:
-			cur_image = model.trainable_camera_inversion(cur_image)
+			cur_image = model.TrainableCameraInversion_stage_model(cur_image)
 		cur_image = torch.clamp(cur_image, 0, 1)
 		cur_image = cur_image * 2 - 1.0
 		# cur_image = cur_image.clamp(-1, 1)
@@ -328,7 +328,7 @@ def main():
 					# If you would like to start from the intermediate steps, you can add noise to LR to the specific steps.
 					t = repeat(torch.tensor([999]), '1 -> b', b=init_image.size(0))
 					t = t.to(device).long()
-					x_T = model.q_sample_respace(x_start=init_latent, t=t, sqrt_alphas_cumprod=sqrt_alphas_cumprod, sqrt_one_minus_alphas_cumprod=sqrt_one_minus_alphas_cumprod, noise=noise)
+					# x_T = model.q_sample_respace(x_start=init_latent, t=t, sqrt_alphas_cumprod=sqrt_alphas_cumprod, sqrt_one_minus_alphas_cumprod=sqrt_one_minus_alphas_cumprod, noise=noise)
 					x_T = None
 
 					samples, _ = model.sample(cond=semantic_c, struct_cond=init_latent, batch_size=init_image.size(0), timesteps=opt.ddpm_steps, time_replace=opt.ddpm_steps, x_T=x_T, return_intermediates=True)
@@ -337,6 +337,8 @@ def main():
 						x_samples = adaptive_instance_normalization(x_samples, init_image)
 					elif opt.colorfix_type == 'wavelet':
 						x_samples = wavelet_reconstruction(x_samples, init_image)
+					else:
+						x_samples = x_samples
 					x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
 					# count += 1
 					# if count==5:
