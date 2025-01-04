@@ -27,8 +27,9 @@ model:
     #P2 weighting, we do not use in final version
     p2_gamma: ~
     p2_k: ~
-    # trainable_camera_inversion
+    # extra module
     is_trainable_camera_inversion: False
+    is_sr_net: True
     # ignore_keys: []
 
     unet_config:
@@ -105,29 +106,16 @@ model:
       params:
         initial_mode: None
 
+    SR_stage_config:
+      target: ldm.modules.conv_modules.SR.SR_Block
+      params:
+        in_chans: 3
+        channels: 64
+        num_blocks: 2
+        loss_sr_weight: 1.0
+        layer_scale_init_value: 1e-6
+        dropout: 0
 
-degradation:
-  # the first degradation process
-  resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
-  resize_range: [0.3, 1.5]
-  gaussian_noise_prob: 0.5
-  noise_range: [1, 15]
-  poisson_scale_range: [0.05, 2.0]
-  gray_noise_prob: 0.4
-  jpeg_range: [60, 95]
-
-  # the second degradation process
-  second_blur_prob: 0.5
-  resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
-  resize_range2: [0.6, 1.2]
-  gaussian_noise_prob2: 0.5
-  noise_range2: [1, 12]
-  poisson_scale_range2: [0.05, 1.0]
-  gray_noise_prob2: 0.4
-  jpeg_range2: [60, 100]
-
-  gt_size: 512
-  no_degradation_prob: 0.01
 
 data:
   target: main.DataModuleFromConfig
