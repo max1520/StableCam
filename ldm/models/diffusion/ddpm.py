@@ -503,7 +503,7 @@ class DDPM(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         loss, loss_dict = self.shared_step(batch)
 
-        self.log_dict(loss_dict, prog_bar=True,
+        self.log_dict(loss_dict, prog_bar=False,
                       logger=True, on_step=True, on_epoch=True)
 
         self.log("global_step", self.global_step,

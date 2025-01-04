@@ -29,6 +29,7 @@ class Feature_Extraction(TimestepBlock):
         dims=2,
         use_checkpoint=False,
         use_fp16=False,
+        use_t=True,
         num_heads=1,
         num_head_channels=-1,
         num_heads_upsample=-1,
@@ -49,12 +50,14 @@ class Feature_Extraction(TimestepBlock):
         self.channel_mult = channel_mult
         self.conv_resample = conv_resample
         self.use_checkpoint = use_checkpoint
+        self.use_t = use_t
         self.dtype = torch.float16 if use_fp16 else torch.float32
         self.num_heads = num_heads
         self.num_head_channels = num_head_channels
         self.num_heads_upsample = num_heads_upsample
 
         time_embed_dim = model_channels * 4  #1024
+        self.time_embed_dim = time_embed_dim
 
         self.time_embed = nn.Sequential(
             linear(model_channels, time_embed_dim),
@@ -137,7 +140,11 @@ class Feature_Extraction(TimestepBlock):
         :param timesteps: a 1-D batch of timesteps.
         :return: an [N x K] Tensor of outputs.
         """
-        emb = self.time_embed(timestep_embedding(timesteps, self.model_channels)) #正弦编码
+        if self.use_t:
+            emb = self.time_embed(timestep_embedding(timesteps, self.model_channels)) #正弦编码
+        else:
+            emb = torch.zeros(timesteps.shape[0], self.time_embed_dim, device=timesteps.device)
+
 
         result_list = []
         results = {}
@@ -172,11 +179,12 @@ if __name__ == '__main__':
         dims=2,
         use_checkpoint=False,
         use_fp16=False,
+        use_t=True,
         num_heads=4,
         num_head_channels=-1,
         num_heads_upsample=-1,
     ).to(device)
     x = torch.rand(2,4,64,64).to(device)
-    timesteps = torch.rand(2,).to(device)
+    timesteps = torch.rand(1,).to(device)
     y = model(x, timesteps)
     print(y)
