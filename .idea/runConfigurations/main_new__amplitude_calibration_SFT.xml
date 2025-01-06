@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="main_new: amplitude_calibration_SFT" type="PythonConfigurationType" factoryName="Python">
-    <module name="stableSR" />
+    <module name="StableSR-main" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
