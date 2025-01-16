@@ -1364,6 +1364,7 @@ class EncoderUNetModelWT(nn.Module):
         dims=2,
         use_checkpoint=False,
         use_fp16=False,
+        use_t=True,
         num_heads=1,
         num_head_channels=-1,
         num_heads_upsample=-1,
@@ -1387,12 +1388,14 @@ class EncoderUNetModelWT(nn.Module):
         self.channel_mult = channel_mult
         self.conv_resample = conv_resample
         self.use_checkpoint = use_checkpoint
+        self.use_t = use_t
         self.dtype = th.float16 if use_fp16 else th.float32
         self.num_heads = num_heads
         self.num_head_channels = num_head_channels
         self.num_heads_upsample = num_heads_upsample
 
         time_embed_dim = model_channels * 4
+        self.time_embed_dim = time_embed_dim
         self.time_embed = nn.Sequential(
             linear(model_channels, time_embed_dim),
             nn.SiLU(),
@@ -1526,7 +1529,10 @@ class EncoderUNetModelWT(nn.Module):
         :param timesteps: a 1-D batch of timesteps.
         :return: an [N x K] Tensor of outputs.
         """
-        emb = self.time_embed(timestep_embedding(timesteps, self.model_channels)) #正弦编码
+        if self.use_t:
+            emb = self.time_embed(timestep_embedding(timesteps, self.model_channels)) #正弦编码
+        else:
+            emb = torch.zeros(timesteps.shape[0], self.time_embed_dim, device=timesteps.device)
 
         result_list = []
         results = {}

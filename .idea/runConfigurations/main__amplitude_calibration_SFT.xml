@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="main: amplitude_calibration_SFT" type="PythonConfigurationType" factoryName="Python">
-    <module name="StableSR-main" />
+    <module name="stableSR" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs>
@@ -14,7 +14,7 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
-    <option name="PARAMETERS" value="--train -b configs/old/stableSRNew/v2-finetune_text_T_amplitude_512_calibration.yaml --gpus 7, --name amplitude_512_calibration_SFT --scale_lr False" />
+    <option name="PARAMETERS" value="--train -b configs/old/stableSRNew/v2-finetune_text_T_amplitude_512_calibration.yaml --gpus 2, --name amplitude_512_calibration_SFT --scale_lr False" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

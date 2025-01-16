@@ -38,6 +38,7 @@ import os
 import cv2
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
+import lpips
 
 import scipy.io as sio
 from skimage.metrics import structural_similarity as ssim
@@ -3295,6 +3296,15 @@ class LatentDiffusionSRTextWT(DDPM):
         #caculater metric
         gt = torch.clamp((gt + 1.0) / 2.0, min=0.0, max=1.0)
         x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
+
+        lpips_metric = lpips.LPIPS(net='vgg').to(gt.device)  # Load LPIPS model (VGG backbone)
+        lpips_values = []
+        for i in range(gt.shape[0]):
+            lpips_value = lpips_metric(gt[i:i + 1], x_samples[i:i + 1]).item()
+            lpips_values.append(lpips_value)
+
+        avg_lpips = sum(lpips_values) / len(lpips_values)
+
         gt_channel1 = gt[:, 0, :, :].cpu().numpy()
         x_samples_channel1 = x_samples[:, 0, :, :].cpu().numpy()
         psnr_values = []
@@ -3310,7 +3320,8 @@ class LatentDiffusionSRTextWT(DDPM):
 
         metric = {
             'avg_psnr': avg_psnr,
-            'avg_ssim': avg_ssim
+            'avg_ssim': avg_ssim,
+            'avg_lpips': avg_lpips,
         }
 
         return metric
@@ -3617,9 +3628,9 @@ if __name__ == '__main__':
         'gt': gt
     }
 
-    loss = model.shared_step(batch)
-    print(loss)
+    # loss = model.shared_step(batch)
+    # print(loss)
 
-    # metric = model.log_metric(batch, N=2, sample=True)
+    metric = model.log_metrics(batch, N=2, sample=True)
 
 

@@ -100,6 +100,12 @@ def get_parser(**parser_kwargs):
         help="train",
     )
     parser.add_argument(
+        "--fusion_w",
+        type=float,
+        default=0.5,
+        help="weight for combining VQGAN and Diffusion",
+    )
+    parser.add_argument(
         "--no-test",
         type=str2bool,
         const=True,
@@ -478,6 +484,8 @@ if __name__ == "__main__":
     model = load_model_from_config(config, f"{opt.ckpt}")
     # model = instantiate_from_config(config.model)
     model.configs = config
+    model.fusion_w = opt.fusion_w
+    print(f"fusion_w is {opt.fusion_w}")
 
     # Load data
     data = instantiate_from_config(config.data)

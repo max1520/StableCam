@@ -299,7 +299,7 @@ class SetupCallback(Callback):
 class ImageLogger(Callback):
     def __init__(self, batch_frequency, max_images, clamp=True, increase_log_steps=True,
                  rescale=True, disabled=False, log_on_batch_idx=False, log_first_step=False,
-                 log_images_kwargs=None, log_every_n_epochs=10):
+                 log_images_kwargs=None, log_every_n_epochs=10, is_log_images=True, is_log_metrics=True):
         super().__init__()
         self.rescale = rescale
         self.batch_freq = batch_frequency
@@ -316,6 +316,8 @@ class ImageLogger(Callback):
         self.log_images_kwargs = log_images_kwargs if log_images_kwargs else {}
         self.log_first_step = log_first_step
         self.log_every_n_epochs = log_every_n_epochs
+        self.is_log_images = is_log_images
+        self.is_log_metrics = is_log_metrics
 
     @rank_zero_only
     def _testtube(self, pl_module, images, batch_idx, split):
@@ -348,26 +350,29 @@ class ImageLogger(Callback):
             if is_train:
                 pl_module.eval()
 
-            with torch.no_grad():
-                images = pl_module.log_images(batch, split=split, **self.log_images_kwargs)
+            if self.is_log_images:
+                with torch.no_grad():
+                    images = pl_module.log_images(batch, split=split, **self.log_images_kwargs)
 
-            for k in images:
-                N = min(images[k].shape[0], self.max_images)
-                images[k] = images[k][:N]
-                if isinstance(images[k], torch.Tensor):
-                    images[k] = images[k].detach().cpu()
-                    if self.clamp:
-                        images[k] = torch.clamp(images[k], -1., 1.)
+                for k in images:
+                    N = min(images[k].shape[0], self.max_images)
+                    images[k] = images[k][:N]
+                    if isinstance(images[k], torch.Tensor):
+                        images[k] = images[k].detach().cpu()
+                        if self.clamp:
+                            images[k] = torch.clamp(images[k], -1., 1.)
 
-            self.log_local(pl_module.logger.save_dir, split, images, pl_module.global_step, pl_module.current_epoch, batch_idx)
-            logger_log_images = self.logger_log_images.get(logger, lambda *args, **kwargs: None)
-            logger_log_images(pl_module, images, pl_module.global_step, split)
+                self.log_local(pl_module.logger.save_dir, split, images, pl_module.global_step, pl_module.current_epoch, batch_idx)
+                logger_log_images = self.logger_log_images.get(logger, lambda *args, **kwargs: None)
+                logger_log_images(pl_module, images, pl_module.global_step, split)
 
-            # 记录 PSNR 和 SSIM
-            if hasattr(pl_module, "log_metrics") and callable(pl_module.log_metrics):
-                metrics = pl_module.log_metrics(batch, split=split, **self.log_images_kwargs)
-                pl_module.log('avg_psnr', metrics['avg_psnr'], prog_bar=True, logger=True, on_step=True, on_epoch=False)
-                pl_module.log('avg_ssim', metrics['avg_ssim'], prog_bar=True, logger=True, on_step=True, on_epoch=False)
+            if self.is_log_metrics:
+            # 记录metircs
+                if hasattr(pl_module, "log_metrics") and callable(pl_module.log_metrics):
+                    metrics = pl_module.log_metrics(batch, split=split, **self.log_images_kwargs)
+                    pl_module.log('avg_psnr', metrics['avg_psnr'], prog_bar=False, logger=True, on_step=True, on_epoch=False)
+                    pl_module.log('avg_ssim', metrics['avg_ssim'], prog_bar=False, logger=True, on_step=True, on_epoch=False)
+                    pl_module.log('avg_lpips', metrics['avg_lpips'], prog_bar=False, logger=True, on_step=True, on_epoch=False)
 
             if is_train:
                 pl_module.train()
