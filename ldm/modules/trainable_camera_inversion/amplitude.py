@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import scipy.io as sio
 
 class TrainableCameraInversion(nn.Module):
-    def __init__(self, initial_mode=None, image_size=512):
+    def __init__(self, initial_mode=None, image_size=None, data_code='1217'):
         super().__init__()
 
         # 初始化模式和参数
@@ -17,8 +17,8 @@ class TrainableCameraInversion(nn.Module):
 
         if self.initial_mode == 'calibration':
             # 加载 Phi 矩阵
-            Phil = sio.loadmat(f"D:/cqy/flat_data/1217/initial_matrix/{image_size}/Phi_rec_left.mat")
-            Phir = sio.loadmat(f"D:/cqy/flat_data/1217/initial_matrix/{image_size}/Phi_rec_right.mat")
+            Phil = sio.loadmat(f"D:/cqy/flat_data/{data_code}/initial_matrix/{image_size}/Phi_rec_left.mat")
+            Phir = sio.loadmat(f"D:/cqy/flat_data/{data_code}/initial_matrix/{image_size}/Phi_rec_right.mat")
 
             # 获取矩阵大小
             self.height_left, self.width_left = Phil['Phi_rec_left'].shape
@@ -32,8 +32,8 @@ class TrainableCameraInversion(nn.Module):
 
         if self.initial_mode == 'random':
             # 加载 Phi 矩阵
-            Phil = sio.loadmat(f"D:/cqy/flat_data/1217/initial_matrix/toplize_{image_size}/Phi_rec_left.mat")
-            Phir = sio.loadmat(f"D:/cqy/flat_data/1217/initial_matrix/toplize_{image_size}/Phi_rec_right.mat")
+            Phil = sio.loadmat(f"D:/cqy/flat_data/{data_code}/initial_matrix/toplize_{image_size}/Phi_rec_left.mat")
+            Phir = sio.loadmat(f"D:/cqy/flat_data/{data_code}/initial_matrix/toplize_{image_size}/Phi_rec_right.mat")
 
             # 获取矩阵大小
             self.height_left, self.width_left = Phil['Phi_rec_left'].shape
@@ -71,7 +71,7 @@ class TrainableCameraInversion(nn.Module):
 
 if __name__ == '__main__':
     device = torch.device('cuda')
-    trainablecamerainversion = TrainableCameraInversion(initial_mode='random', image_size=128).to(device)
+    trainablecamerainversion = TrainableCameraInversion(initial_mode='random', image_size=128, data_code='0104').to(device)
     x = torch.rand(1,3,540,720).to(device)
     y = trainablecamerainversion(x)
     print(y.shape)  #(1,3,512,512)
