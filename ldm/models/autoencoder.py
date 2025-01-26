@@ -1421,38 +1421,41 @@ class AutoencoderKL_SR(pl.LightningModule):
             return discloss
 
     def validation_step(self, batch, batch_idx):
-        inputs, gts, latents, _ = self.get_input(batch)
+        if self.current_epoch % 10 == 0 and self.current_epoch > 400:
+            inputs, gts, latents, _ = self.get_input(batch)
 
-        reconstructions, posterior = self(inputs, latents)
-        aeloss, log_dict_ae = self.loss(gts, reconstructions, posterior, 0, self.global_step,
-                                        last_layer=self.get_last_layer(), split="val")
+            reconstructions, posterior = self(inputs, latents)
+            # aeloss, log_dict_ae = self.loss(gts, reconstructions, posterior, 0, self.global_step,
+            #                                 last_layer=self.get_last_layer(), split="val")
+            #
+            # discloss, log_dict_disc = self.loss(gts, reconstructions, posterior, 1, self.global_step,
+            #                                     last_layer=self.get_last_layer(), split="val")
+            #
+            # self.log("val/rec_loss", log_dict_ae["val/rec_loss"])
+            # self.log_dict(log_dict_ae)
+            # self.log_dict(log_dict_disc)
+            # return self.log_dict
 
-        discloss, log_dict_disc = self.loss(gts, reconstructions, posterior, 1, self.global_step,
-                                            last_layer=self.get_last_layer(), split="val")
-
-        self.log("val/rec_loss", log_dict_ae["val/rec_loss"])
-        self.log_dict(log_dict_ae)
-        self.log_dict(log_dict_disc)
-        # return self.log_dict
-
-        # caculater metric
-        with torch.no_grad():
-            gts = torch.clamp((gts + 1.0) / 2.0, min=0.0, max=1.0)
-            reconstructions = torch.clamp((reconstructions + 1.0) / 2.0, min=0.0, max=1.0)
-            gt_channel1 = gts[:, 0, :, :].cpu().numpy()
-            reconstructions_channel1 = reconstructions[:, 0, :, :].cpu().numpy()
-            for gt_img, recon_img in zip(gt_channel1, reconstructions_channel1):
-                psnr_value = psnr(recon_img, gt_img, data_range=1)
-                ssim_value = ssim(recon_img, gt_img, data_range=1)
-                self.psnr.update(psnr_value, n=1)
-                self.ssim.update(ssim_value, n=1)
+            # caculater metric
+            with torch.no_grad():
+                gts = torch.clamp((gts + 1.0) / 2.0, min=0.0, max=1.0)
+                reconstructions = torch.clamp((reconstructions + 1.0) / 2.0, min=0.0, max=1.0)
+                gt_channel1 = gts[:, 0, :, :].cpu().numpy()
+                reconstructions_channel1 = reconstructions[:, 0, :, :].cpu().numpy()
+                for gt_img, recon_img in zip(gt_channel1, reconstructions_channel1):
+                    psnr_value = psnr(recon_img, gt_img, data_range=1)
+                    ssim_value = ssim(recon_img, gt_img, data_range=1)
+                    self.psnr.update(psnr_value, n=1)
+                    self.ssim.update(ssim_value, n=1)
+        else:
+            pass
 
     def on_validation_epoch_end(self):
         avg_psnr = self.psnr.avg
         avg_ssim = self.ssim.avg
         # 记录到日志
-        self.log("val/avg_psnr", avg_psnr, prog_bar=True, logger=True, on_step=False, on_epoch=True)
-        self.log("val/avg_ssim", avg_ssim, prog_bar=True, logger=True, on_step=False, on_epoch=True)
+        self.log("val/avg_psnr", avg_psnr, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+        self.log("val/avg_ssim", avg_ssim, prog_bar=False, logger=True, on_step=False, on_epoch=True)
         # 重置以便下个 epoch 使用
         self.psnr.reset()
         self.ssim.reset()
@@ -1584,7 +1587,7 @@ class AutoencoderKL_SR(pl.LightningModule):
 if __name__ == '__main__':
     device = torch.device('cuda')
     autoencoderklresi = AutoencoderKL_SR(
-        ckpt_path= r"D:\cqy\stableSR\logs\2024-10-10T15-15-02_Tik_SFT_256-512\checkpoints\last.ckpt",
+        ckpt_path= None,
         monitor="val/rec_loss",
         embed_dim=4,
         fusion_w=0.5,

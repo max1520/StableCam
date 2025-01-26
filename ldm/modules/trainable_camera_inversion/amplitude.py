@@ -58,20 +58,50 @@ class TrainableCameraInversion(nn.Module):
             # 在通道维度上增加维度并重复
             measure_expanded = measure_transformed.unsqueeze(1).repeat(1, 3, 1, 1)
 
-            # 应用 ReLU 激活
-            measure = F.relu(measure_expanded)
         else:
-            raise ValueError("Expected error in forward")
+            raise ValueError("Expected initial_mode in forward")
 
         if self.scale != 1:
             # 使用双立方插值将尺寸调整到 (512, 512)
-            measure = F.interpolate(measure, size=(512, 512), mode='bicubic', align_corners=False)
+            measure = F.interpolate(measure_expanded, size=(512, 512), mode='bicubic', align_corners=False)
+
+        # 应用 ReLU 激活
+        measure = F.relu(measure)
+
+        #归一化
+        # 计算全局最小值和最大值
+        min_val = measure.min()  # 标量
+        max_val = measure.max()  # 标量
+        # 归一化到 (0, 1)
+        measure = (measure - min_val) / (max_val - min_val)
 
         return measure
 
 if __name__ == '__main__':
     device = torch.device('cuda')
-    trainablecamerainversion = TrainableCameraInversion(initial_mode='random', image_size=128, data_code='0104').to(device)
-    x = torch.rand(1,3,540,720).to(device)
-    y = trainablecamerainversion(x)
-    print(y.shape)  #(1,3,512,512)
+    trainablecamerainversion = TrainableCameraInversion(initial_mode='calibration', image_size=128, data_code='0104').to(device)
+    # x = torch.rand(4,3,540,720).to(device)
+
+    from PIL import Image
+    from torchvision import transforms
+    # 读取图像
+    image_path = r"D:\cqy\flat_data\0104\eval\measure_resize\image (10000).png"
+    image = Image.open(image_path).convert('RGB')  # 确保图像是RGB格式
+    # 定义转换操作
+    transform = transforms.Compose([
+        transforms.ToTensor(),  # 转换为张量并归一化到 [0, 1]
+    ])
+    # 应用转换
+    image_tensor = transform(image).unsqueeze(0).to(device)
+
+    y = trainablecamerainversion(image_tensor)
+    print(y.shape)  #(b,3,512,512)
+
+
+    y = y.squeeze(0)  # 形状变为 (3, 512, 512)
+    to_pil = transforms.ToPILImage()
+    image = to_pil(y)
+    save_path = r"D:\cqy\flat_data\0104\eval\image_10000.png"
+    image.save(save_path)
+
+    print(f"图像已保存到: {save_path}")

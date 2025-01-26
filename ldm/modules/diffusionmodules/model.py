@@ -801,13 +801,14 @@ class Decoder_SR(nn.Module):
     def __init__(self, *, ch, out_ch, ch_mult=(1,2,4,8), num_res_blocks,
                  attn_resolutions, dropout=0.0, resamp_with_conv=True, in_channels,
                  resolution, z_channels, give_pre_end=False, tanh_out=False, use_linear_attn=False,
-                 attn_type="vanilla", num_fuse_block=2, fusion_w=1.0, **ignorekwargs):
+                 attn_type="vanilla", num_fuse_block=2, fusion_w=0.5, **ignorekwargs):
         super().__init__()
         if use_linear_attn: attn_type = "linear"
         self.ch = ch
         self.temb_ch = 0
         self.num_resolutions = len(ch_mult)
         self.num_res_blocks = num_res_blocks
+        self.num_fuse_block = num_fuse_block
         self.resolution = resolution
         self.in_channels = in_channels
         self.give_pre_end = give_pre_end
@@ -850,7 +851,7 @@ class Decoder_SR(nn.Module):
 
             if i_level != self.num_resolutions-1: #避免最顶层（第 3 层）初始化融合层
                 if i_level != 0: #避免最底层
-                    fuse_layer = Fuse_sft_block_SR(in_ch=block_out, out_ch=block_out, num_block=num_fuse_block)
+                    fuse_layer = Fuse_sft_block_SR(in_ch=block_out, out_ch=block_out, num_block=self.num_fuse_block)
                     setattr(self, 'fusion_layer_{}'.format(i_level), fuse_layer)
 
             for i_block in range(self.num_res_blocks+1):
@@ -880,13 +881,13 @@ class Decoder_SR(nn.Module):
 
     def forward(self, z, enc_fea):
         #assert z.shape[1:] == self.z_shape[1:]
-        self.last_z_shape = z.shape
+        self.last_z_shape = z.shape #(1,4,64,64)
 
         # timestep embedding
         temb = None
 
         # z to block_in
-        h = self.conv_in(z)
+        h = self.conv_in(z) #512
 
         # middle
         h = self.mid.block_1(h, temb)
@@ -961,11 +962,11 @@ class Fuse_sft_block_SR(nn.Module):
     def __init__(self, in_ch, out_ch, num_block=2, layer_scale_init_value=1e-6, dropout=0):
         super().__init__()
         self.encode_enc_1 = ResBlock(in_ch, in_ch)
-        self.encode_enc_2 = SR_Block(in_chans=in_ch, channels=out_ch, num_blocks=num_block, layer_scale_init_value=layer_scale_init_value, dropout=dropout)
+        self.encode_enc_2 = SR_Block(in_chans=in_ch, out_chans=in_ch, channels=out_ch, num_blocks=num_block, layer_scale_init_value=layer_scale_init_value, dropout=dropout)
         self.encode_enc_3 = ResBlock(in_ch, out_ch)
         self.spade = SPADE_tensor(norm_nc=in_ch, label_nc=in_ch)
     def forward(self, enc_feat, dec_feat, w=1):
-        enc_feat = self.spade(enc_feat, dec_feat)
+        enc_feat = self.spade(enc_feat, dec_feat) #(1,512,128,128)
         enc_feat = self.encode_enc_1(enc_feat)
         enc_feat = self.encode_enc_2(enc_feat)
         enc_feat = self.encode_enc_3(enc_feat)

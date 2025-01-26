@@ -523,12 +523,14 @@ class DDPM(pl.LightningModule):
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
-        _, loss_dict_no_ema = self.shared_step(batch)
-        with self.ema_scope():
-            _, loss_dict_ema = self.shared_step(batch)
-            loss_dict_ema = {key + '_ema': loss_dict_ema[key] for key in loss_dict_ema}
-        self.log_dict(loss_dict_no_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True)
-        self.log_dict(loss_dict_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+        # _, loss_dict_no_ema = self.shared_step(batch)
+        # with self.ema_scope():
+        #     _, loss_dict_ema = self.shared_step(batch)
+        #     loss_dict_ema = {key + '_ema': loss_dict_ema[key] for key in loss_dict_ema}
+        # self.log_dict(loss_dict_no_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+        # self.log_dict(loss_dict_ema, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+        pass
+
 
     def on_train_batch_end(self, *args, **kwargs):
         if self.use_ema:
@@ -3609,8 +3611,10 @@ class Layout2ImgDiffusion(LatentDiffusion):
 
 if __name__ == '__main__':
     from omegaconf import OmegaConf
+    from PIL import Image
+    from torchvision import transforms
 
-    config_path = 'configs/new/stableSRNew/v2-finetune_text_T_amplitude_128_Tik.yaml'
+    config_path = 'configs/new/stableSRNew/v2-finetune_text_T_amplitude_128_calibration_temp.yaml'
     config = OmegaConf.load(config_path)
 
     # latentdiffusionsrtextwt = LatentDiffusionSRTextWT(opt)
@@ -3621,16 +3625,31 @@ if __name__ == '__main__':
     model = model.cuda()
     # print(model.TrainableCameraInversion_stage_model.PhiL)
 
-    lq = torch.rand(1,3,512,512).cuda()
+    # 读取图像
+    image_path = r"D:\cqy\flat_data\0104\eval\measure_resize\image (10000).png"
+    image = Image.open(image_path).convert('RGB')  # 确保图像是RGB格式
+    # 定义转换操作
+    transform = transforms.Compose([
+        transforms.ToTensor(),  # 转换为张量并归一化到 [0, 1]
+    ])
+    # 应用转换
+    lq = transform(image).unsqueeze(0).cuda()
+    # lq = torch.rand(1,3,512,512).cuda()
     gt = torch.rand(1,3,512,512).cuda()
     batch = {
         'lq': lq,
         'gt': gt
     }
+    _,_,_,im_lq,_,_=model.get_input(batch,return_first_stage_outputs=True)
+    y = im_lq.squeeze(0)  # 形状变为 (3, 512, 512)
+    to_pil = transforms.ToPILImage()
+    image = to_pil(y)
+    save_path = r"D:\cqy\flat_data\0104\eval\image_0104_128.png"
+    image.save(save_path)
 
     # loss = model.shared_step(batch)
     # print(loss)
 
-    metric = model.log_metrics(batch, N=2, sample=True)
+    # metric = model.log_metrics(batch, N=2, sample=True)
 
 
