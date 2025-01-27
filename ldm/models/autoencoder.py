@@ -1421,7 +1421,7 @@ class AutoencoderKL_SR(pl.LightningModule):
             return discloss
 
     def validation_step(self, batch, batch_idx):
-        if self.current_epoch % 10 == 0 and self.current_epoch > 400:
+        if self.current_epoch % 10 == 0 and self.current_epoch > 200:
             inputs, gts, latents, _ = self.get_input(batch)
 
             reconstructions, posterior = self(inputs, latents)

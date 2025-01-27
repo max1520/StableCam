@@ -104,7 +104,7 @@ model:
     TrainableCameraInversion_stage_config:
       target:  ldm.modules.trainable_camera_inversion.amplitude.TrainableCameraInversion
       params:
-        initial_mode: calibration
+        initial_mode: random
         image_size: 128
         data_code: "0104"
 
