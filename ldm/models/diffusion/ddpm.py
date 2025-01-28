@@ -2641,7 +2641,8 @@ class LatentDiffusionSRTextWT(DDPM):
 
         #sr损失
         if self.is_sr_net:
-            im_lq_sr = self.sr_stage_model(im_lq)
+            # im_lq_sr = self.sr_stage_model(im_lq)
+            im_lq_sr = im_lq
             loss_sr = self.get_loss(im_lq_sr, im_gt, mean=False).mean(dim=(1, 2, 3))
             loss_sr = self.sr_stage_model.loss_sr_weight * loss_sr.mean()
             loss_dict.update({f'{prefix}/loss_sr': loss_sr})

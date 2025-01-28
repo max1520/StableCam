@@ -378,7 +378,7 @@ class ImageLogger(Callback):
                 pl_module.train()
 
     def check_frequency(self, pl_module, check_idx):
-        if check_idx == 0 and (pl_module.current_epoch % self.log_every_n_epochs == 0):
+        if check_idx == 0 and ((pl_module.current_epoch + 1) % self.log_every_n_epochs == 0):
             return True
         return False
 

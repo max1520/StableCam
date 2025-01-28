@@ -85,7 +85,7 @@ if __name__ == '__main__':
     from PIL import Image
     from torchvision import transforms
     # 读取图像
-    image_path = r"D:\cqy\flat_data\0104\eval\measure_resize\image (10000).png"
+    image_path = r"D:\cqy\flat_data\0104\eval\measure_resize\image (1530).png"
     image = Image.open(image_path).convert('RGB')  # 确保图像是RGB格式
     # 定义转换操作
     transform = transforms.Compose([
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     y = y.squeeze(0)  # 形状变为 (3, 512, 512)
     to_pil = transforms.ToPILImage()
     image = to_pil(y)
-    save_path = r"D:\cqy\flat_data\0104\eval\image_10000.png"
+    save_path = r"D:\cqy\flat_data\0104\eval\image_1530.png"
     image.save(save_path)
 
     print(f"图像已保存到: {save_path}")
