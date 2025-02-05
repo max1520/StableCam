@@ -1,139 +1,122 @@
 import torch
 import torch.nn as nn
+import torch.fft
+import torchvision.transforms as transforms
 import torch.nn.functional as F
 from PIL import Image
-from torchvision import transforms
-
-def roll_n(X, axis, n):
-    f_idx = tuple(
-        slice(None, None, None) if i != axis else slice(0, n, None)
-        for i in range(X.dim())
-    )
-    b_idx = tuple(
-        slice(None, None, None) if i != axis else slice(n, None, None)
-        for i in range(X.dim())
-    )
-    front = X[f_idx]
-    back = X[b_idx]
-    return torch.cat([back, front], axis)
-
-def fft_conv2d(input, kernel):
-    """
-    Computes the convolution in the frequency domain given
-    Expects input and kernel already in frequency domain!
-    :param input: shape (B, Cin, H, W)
-    :param kernel: shape (Cout, Cin, H, W)
-    :param bias: shape of (B, Cout, H, W)
-    :return:
-    """
-    input = torch.fft.fftn(input)
-    kernel = torch.fft.fftn(kernel)
-
-    # (a+bj)*(c+dj) = (ac-bd)+(ad+bc)j
-    real = torch.real(input) * torch.real(kernel) - torch.imag(input) * torch.imag(kernel)
-    im = torch.real(input) * torch.imag(kernel) + torch.imag(input) * torch.real(kernel)
-
-    # Stack both channels and sum-reduce the input channels dimension
-    out = torch.complex(real, im)
-
-    out = torch.fft.ifftn(out).real
-    return out
 
 
-def get_wiener_matrix(psf, Gamma: float = 2e4, centre_roll: bool = False):
-    """
-    Get Weiner inverse of PSF
-    :param psf: Point Spread Function (h,w)
-    :param Gamma: Parameter for the Weiner filter
-    :return: Weiner inverse
-    """
-    if centre_roll:
-        for dim in range(2):
-            psf = roll_n(psf, axis=dim, n=psf.size(dim) // 2)
-    H = torch.fft.fftn(psf)
-    H_conj = torch.conj(H)
-    Habsq = torch.real(H * H_conj)
-    W = torch.div(H_conj, (Habsq + Gamma))
-    w = torch.fft.ifftn(W).real  #dp不支持复数
-    return w
-
-
-class FFTLayer(nn.Module):
-    def __init__(self, initial_mode='calibration', fft_gamma=2e4, image_size=(256, 256), is_require_grad=True):
+# 定义 FFT Layer 作为 nn.Module 类
+class FFTlayer(nn.Module):
+    def __init__(self, psf_image_path, gamm_l2=1e4, crop_area=None):
+        if crop_area is None:
+            crop_area = [618, 437, 200, 200]
         super().__init__()
-        self.fft_gamma = fft_gamma
-        self.image_size = image_size
-        self.initial_mode = initial_mode
-        self.is_require_grad = is_require_grad
-        ###
-        # psf = torch.rand(1052, 1400).to(self.device)
-        # 加载图像
-        psf = Image.open(r"D:\cqy\phlat_data\psf\psf_14cm_15um_100exposure.png").convert('L')
-        # 将图像转换为张量
-        transform = transforms.ToTensor()  # 转换为Tensor并归一化到[0, 1]
-        psf = transform(psf)
-        psf = psf.squeeze(0)
+        # 加载 PSF 图像
+        psf_image = Image.open(psf_image_path).convert('L')
+        psf_tensor = transforms.ToTensor()(psf_image).unsqueeze(0)  # 转为张量并增加 batch 维度
+        self.psf = nn.Parameter(psf_tensor, requires_grad=True)  # 将 PSF 定义为不可训练的参数
+        self.normalizer = nn.Parameter(torch.ones(1, 1, 1, 1), requires_grad=True)
 
-        wiener_matrix = get_wiener_matrix(
-            psf, Gamma=self.fft_gamma, centre_roll=False
-        )
-        # wiener_matrix = torch.rand(1280,1408).to(self.device)
+        # 正则化常数
+        self.gamm_l2 = gamm_l2
 
-        self.wiener_matrix = nn.Parameter(wiener_matrix, requires_grad=self.is_require_grad)
+        # 裁剪区域
+        self.crop_area = crop_area
 
-        self.normalizer = nn.Parameter(
-            torch.tensor([1 / 0.0008]).reshape(1, 1, 1, 1), requires_grad=self.is_require_grad)
+    def forward(self, x):
+        """
+        输入 x 维度为 (b, 3, H, W)，PSF 维度为 (1, 1, H, W)
+        """
+        # 将三通道输入转换为单通道（取均值）
+        x = torch.mean(x, dim=1, keepdim=True)  # (b, 1, H, W)
+
+        # Fourier域滤波
+        def Fx(x):
+            return torch.fft.fft2(torch.fft.fftshift(x, dim=(-2, -1)), dim=(-2, -1))
+
+        def FiltX(H, x):
+            return torch.real(torch.fft.ifftshift(torch.fft.ifft2(H * Fx(x), dim=(-2, -1)), dim=(-2, -1)))
+
+        # 计算 Hs 和 Hs_conj
+        Hs = Fx(self.psf)  # PSF 的频谱
+        Hs_conj = torch.conj(Hs)  # 共轭
+        HtH = torch.abs(Hs * Hs_conj)  # 幅值平方
+
+        # 重建图像
+        xFilt_mult = 1 / (HtH + self.gamm_l2)
+
+        # 进行重建
+        numerator = FiltX(Hs_conj, x)
+        R_nxt = FiltX(xFilt_mult, numerator)
+        # R_nxt = R_nxt * self.normalizer
+
+        # 进行裁剪
+        x_start, y_start, crop_width, crop_height = self.crop_area
+        R_nxt = R_nxt[:, :, y_start:y_start + crop_height, x_start:x_start + crop_width]
+
+        # 调整大小到 (512, 512)并归一化
+        R_nxt = F.interpolate(R_nxt, size=(512, 512), mode='bilinear', align_corners=False)
+        # 计算最小值和最大值
+        min_val = R_nxt.min()
+        max_val = R_nxt.max()
+        # 归一化到 [0, 1] 范围
+        R_nxt = (R_nxt - min_val) / (max_val - min_val)
+        R_nxt = R_nxt * self.normalizer
+
+        # 翻转
+        R_nxt = torch.flip(R_nxt, dims=[-1])  # 沿着最后一个维度（宽度）进行水平翻转
+        R_nxt = torch.flip(R_nxt, dims=[-2])  # 沿着倒数第二个维度（高度）进行垂直翻转
+
+        # 将单通道结果堆叠为三通道
+        R_nxt = R_nxt.repeat(1, 3, 1, 1)  # (b, 1, H, W) -> (b, 3, H, W)
+
+        return R_nxt
 
 
-    def forward(self, img):
-        fft_layer = 1 * self.wiener_matrix
-
-        # Centre roll
-        for dim in range(2):
-            fft_layer = roll_n(
-                fft_layer, axis=dim, n=fft_layer.size(dim) // 2
-            )
-
-        # Make 1 x 1 x H x W
-        fft_layer = fft_layer.unsqueeze(0).unsqueeze(0)
-
-        # FFT Layer dims
-        _, _, fft_h, fft_w = fft_layer.shape
-
-        # Target image dims
-        img_h = self.image_size[0]
-        img_w = self.image_size[1]
-
-        # Do FFT convolve
-        img = fft_conv2d(img, fft_layer) * self.normalizer
-
-        # Centre Crop
-        img = img[
-            :,
-            :,
-            fft_h // 2 - img_h // 2 : fft_h // 2 + img_h // 2,
-            fft_w // 2 - img_w // 2 : fft_w // 2 + img_w // 2,
-        ]
-
-        img =  F.interpolate(img, size=(512, 512), mode='bilinear', align_corners=False)
-
-        return img
-
-
+# 加载图像并转换为张量
+def load_image(image_path, size=(1080, 1440)):
+    image = Image.open(image_path).convert('L')  # 转为灰度图
+    transform = transforms.Compose([
+        transforms.Resize(size),  # 调整大小
+        transforms.ToTensor(),  # 转为张量
+    ])
+    img_tensor = transform(image).unsqueeze(0)  # 增加 batch 维度
+    return img_tensor
 
 if __name__ == '__main__':
-    import os
-    # 设置使用的 GPU
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 使用 GPU 6 和 GPU 7
-    device = torch.device('cuda')
+    # 设置路径
+    image_paths = [
+        r"E:\cqy\phase_data\0116\measure\image (1).png",
+        r"E:\cqy\phase_data\0116\measure\image (2).png",
+    ]
+    # 加载输入图像
+    images = [load_image(path) for path in image_paths]
+    b = torch.cat(images, dim=0).cuda()  # 合并为一个批次 (b, 1, 1080, 1440)
 
-    # 初始化模型并使用 DataParallel 包装
-    model = FFTLayer().to(device)
-    model = torch.nn.DataParallel(model)  # 包装以支持多卡
+    psf_path = r"D:\cqy\phase_data\0116\psf\psf.png"
+    # b = torch.randn(2,3,1080,1440).cuda()
+    # 实例化模型
+    model = FFTlayer(psf_image_path=psf_path).cuda()
 
-    # 创建输入数据
-    img = torch.rand(8, 3, 1052, 1400).to(device)
+    # 模型前向推理
+    output = model(b)
 
-    # 前向传播
-    y = model(img)
-    print(y.shape)
+    # 打印输出的形状
+    print("Output shape: ", output.shape) #(b,3,512,512)
+
+
+    # 保存结果为图像
+    # def save_image(tensor, filename):
+    #     tensor = tensor.squeeze(0)  # 移除 batch 维度
+    #     tensor = tensor.cpu().detach()  # 移动到 CPU 并断开计算图
+    #     tensor = (tensor - tensor.min()) / (tensor.max() - tensor.min())  # 归一化到 [0, 1]
+    #     img_pil = transforms.ToPILImage()(tensor)  # 转为 PIL 图像
+    #     img_pil.save(filename)
+    #
+    #
+    # # 保存重建的图像
+    # save_image(output[0], r"E:\cqy\phase_data\0116\reconstructed_image_1.png")
+    # save_image(output[1], r"E:\cqy\phase_data\0116\reconstructed_image_2.png")
+
+    # print("Images saved successfully.")

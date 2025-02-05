@@ -19,7 +19,7 @@ model:
     scale_factor: 0.18215
     use_ema: False
     # for training only
-    ckpt_path: D:\cqy\StableSR-main\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
+    ckpt_path: D:\cqy\stableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
     unfrozen_diff: False
     random_size: False
     time_replace: 1000
@@ -27,8 +27,9 @@ model:
     #P2 weighting, we do not use in final version
     p2_gamma: ~
     p2_k: ~
-    # trainable_camera_inversion
-    is_trainable_camera_inversion: False
+    # extra module
+    is_trainable_camera_inversion: True
+    is_sr_net: True
     # ignore_keys: []
 
     unet_config:
@@ -54,7 +55,7 @@ model:
       target: ldm.models.autoencoder.AutoencoderKL
       params:
         # for training only
-        ckpt_path: D:\cqy\StableSR-main\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
+        ckpt_path: D:\cqy\stableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
         embed_dim: 4
         monitor: val/rec_loss
         ddconfig:
@@ -82,69 +83,58 @@ model:
         layer: "penultimate"
 
     structcond_stage_config:
-      target: ldm.modules.diffusionmodules.openaimodel.EncoderUNetModelWT
+      target: ldm.modules.conv_modules.feature_extraction.Feature_Extraction
       params:
         image_size: 96
         in_channels: 4
         model_channels: 256
         out_channels: 256
         num_res_blocks: 2
-        attention_resolutions: [ 4, 2, 1 ]
+        attention_resolutions:  [ 4, 2, 1 ]
         dropout: 0
         channel_mult: [ 1, 1, 2, 2 ]
-        conv_resample: True
+        conv_resample: true
         dims: 2
-        use_checkpoint: False
-        use_fp16: False
+        use_checkpoint: false
+        use_fp16: false
         num_heads: 4
         num_head_channels: -1
         num_heads_upsample: -1
-        use_scale_shift_norm: False
-        resblock_updown: False
-        use_new_attention_order: False
 
     TrainableCameraInversion_stage_config:
-      target: ldm.modules.trainable_camera_inversion.amplitude.TrainableCameraInversion
+      target:  ldm.modules.trainable_camera_inversion.FFTlayer.FFTlayer
       params:
-        initial_mode: calibration
+#        initial_mode: calibration
+        psf_image_path: "D:/cqy/phase_data/0116/psf/psf_origin.png"
+        crop_area: [618, 437, 200, 200]
 
 
-degradation:
-  # the first degradation process
-  resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
-  resize_range: [0.3, 1.5]
-  gaussian_noise_prob: 0.5
-  noise_range: [1, 15]
-  poisson_scale_range: [0.05, 2.0]
-  gray_noise_prob: 0.4
-  jpeg_range: [60, 95]
+    SR_stage_config:
+      target: ldm.modules.conv_modules.SR.SR_Block
+      params:
+        in_chans: 3
+        out_chans: 3
+        channels: 64
+        num_blocks: 2
+        loss_sr_weight: 1.0
+        layer_scale_init_value: 1e-6
+        dropout: 0
 
-  # the second degradation process
-  second_blur_prob: 0.5
-  resize_prob2: [0.3, 0.4, 0.3]  # up, down, keep
-  resize_range2: [0.6, 1.2]
-  gaussian_noise_prob2: 0.5
-  noise_range2: [1, 12]
-  poisson_scale_range2: [0.05, 1.0]
-  gray_noise_prob2: 0.4
-  jpeg_range2: [60, 100]
-
-  gt_size: 512
-  no_degradation_prob: 0.01
 
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 1
+    batch_size: 4
     num_workers: 6
     wrap: false
+    mix_train: False
     train:
       target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
         phase: train
         queue_size: 180
-        dataroot_gt: 'D:/cqy/phlat_data/image1k_512/label_512'
-        dataroot_lq: 'D:/cqy/phlat_data/image1k_512/inter'
+        dataroot_gt: 'D:\cqy\phase_data\0116\eval\label_512'
+        dataroot_lq: 'D:\cqy\phase_data\0116\eval\measure'
 
         crop_size: 512
         io_backend:
@@ -175,8 +165,8 @@ data:
       target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
         phase: validation
-        dataroot_gt: 'D:/cqy/phlat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/phlat_data/image1k_512/eval_inter'
+        dataroot_gt: 'D:\cqy\phase_data\0116\eval\label_512'
+        dataroot_lq: 'D:\cqy\phase_data\0116\eval\measure'
         crop_size: 512
         io_backend:
           type: disk
@@ -212,8 +202,8 @@ test_data:
     test:
       target: basicsr.data.realesrgan_paired_dataset.RealESRGANPairedDataset
       params:
-        dataroot_gt: 'D:/cqy/phlat_data/image1k_512/eval_label_512'
-        dataroot_lq: 'D:/cqy/phlat_data/image1k_512/eval_inter'
+        dataroot_gt: 'D:\cqy\phase_data\0116\eval\label_512'
+        dataroot_lq: 'D:\cqy\phase_data\0116\eval\measure'
         crop_size: 512
         io_backend:
           type: disk
@@ -243,7 +233,9 @@ test_data:
 lightning:
   modelcheckpoint:
     params:
-      every_n_train_steps: 1500
+#      every_n_train_steps: 1500
+      every_n_epochs: 10
+      save_top_k: -1
   callbacks:
     image_logger:
       target: main.ImageLogger
@@ -259,7 +251,7 @@ lightning:
     benchmark: True
     max_steps: 800000
     accumulate_grad_batches: 4
-#    limit_train_batches: 1
-#    limit_test_batches: 1
+#    limit_train_batches: 0.01
+#    limit_test_batches: 0.01
 #    limit_val_batches: 1
 

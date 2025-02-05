@@ -1421,9 +1421,8 @@ class AutoencoderKL_SR(pl.LightningModule):
             return discloss
 
     def validation_step(self, batch, batch_idx):
-        if self.current_epoch % 10 == 0 and self.current_epoch > 200:
+        if (self.current_epoch +1) % 1 == 0:
             inputs, gts, latents, _ = self.get_input(batch)
-
             reconstructions, posterior = self(inputs, latents)
             # aeloss, log_dict_ae = self.loss(gts, reconstructions, posterior, 0, self.global_step,
             #                                 last_layer=self.get_last_layer(), split="val")
@@ -1447,18 +1446,27 @@ class AutoencoderKL_SR(pl.LightningModule):
                     ssim_value = ssim(recon_img, gt_img, data_range=1)
                     self.psnr.update(psnr_value, n=1)
                     self.ssim.update(ssim_value, n=1)
+            avg_psnr = self.psnr.avg
+            avg_ssim = self.ssim.avg
+            # 记录到日志
+            self.log("val/avg_psnr", avg_psnr, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+            self.log("val/avg_ssim", avg_ssim, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+            # 重置以便下个 epoch 使用
+            self.psnr.reset()
+            self.ssim.reset()
+
         else:
             pass
 
-    def on_validation_epoch_end(self):
-        avg_psnr = self.psnr.avg
-        avg_ssim = self.ssim.avg
-        # 记录到日志
-        self.log("val/avg_psnr", avg_psnr, prog_bar=False, logger=True, on_step=False, on_epoch=True)
-        self.log("val/avg_ssim", avg_ssim, prog_bar=False, logger=True, on_step=False, on_epoch=True)
-        # 重置以便下个 epoch 使用
-        self.psnr.reset()
-        self.ssim.reset()
+    # def on_validation_epoch_end(self):
+    #     avg_psnr = self.psnr.avg
+    #     avg_ssim = self.ssim.avg
+    #     # 记录到日志
+    #     self.log("val/avg_psnr", avg_psnr, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+    #     self.log("val/avg_ssim", avg_ssim, prog_bar=False, logger=True, on_step=False, on_epoch=True)
+    #     # 重置以便下个 epoch 使用
+    #     self.psnr.reset()
+    #     self.ssim.reset()
 
     def test_step(self, batch, batch_idx):
         inputs, gts, latents, _ = self.get_input(batch)
