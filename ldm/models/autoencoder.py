@@ -1044,6 +1044,7 @@ class AutoencoderKL_SR(pl.LightningModule):
                  synthesis_data=False,
                  use_usm=False,
                  test_gt=False,
+                 test_output_dir=None,
                  ):
         super().__init__()
         self.image_key = image_key
@@ -1056,6 +1057,7 @@ class AutoencoderKL_SR(pl.LightningModule):
         self.embed_dim = embed_dim
         self.psnr = AverageMeter()
         self.ssim = AverageMeter()
+        self.test_output_dir = test_output_dir
         if colorize_nlabels is not None:
             assert type(colorize_nlabels)==int
             self.register_buffer("colorize", torch.randn(3, colorize_nlabels, 1, 1))
@@ -1421,7 +1423,7 @@ class AutoencoderKL_SR(pl.LightningModule):
             return discloss
 
     def validation_step(self, batch, batch_idx):
-        if (self.current_epoch +1) % 1 == 0:
+        if (self.current_epoch +1) % 10 == 0:
             inputs, gts, latents, _ = self.get_input(batch)
             reconstructions, posterior = self(inputs, latents)
             # aeloss, log_dict_ae = self.loss(gts, reconstructions, posterior, 0, self.global_step,
@@ -1477,8 +1479,10 @@ class AutoencoderKL_SR(pl.LightningModule):
         gts = torch.clamp((gts + 1.0) / 2.0, min=0.0, max=1.0)
 
         # 根据需要动态创建路径
-        recon_dir = f"results/CFW_calibration//sample"  # 可以使用 global_step 作为路径的一部分
-        gt_dir = f"results/CFW_calibration/gt"
+        # recon_dir = f"results/1217/CFW/CFW_Tik/512/samples"  # 可以使用 global_step 作为路径的一部分
+        # gt_dir = f"results/1217/CFW/CFW_Tik/512/gts"
+        recon_dir = f"{self.test_output_dir}/samples"
+        gt_dir = f"{self.test_output_dir}/gts"
         os.makedirs(recon_dir, exist_ok=True)
         os.makedirs(gt_dir, exist_ok=True)
 
@@ -1500,7 +1504,9 @@ class AutoencoderKL_SR(pl.LightningModule):
             gt_img = rearrange(gts[i].cpu().numpy(), 'c h w -> h w c')  # 转换为 (h, w, c) 形状
             Image.fromarray((255. * gt_img).astype(np.uint8)).save(os.path.join(gt_dir, basename + '.png'))
 
+
         return reconstructions
+
 
 
     def configure_optimizers(self):

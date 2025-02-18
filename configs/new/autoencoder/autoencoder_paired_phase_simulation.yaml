@@ -4,19 +4,11 @@ model:
   params:
     # for training only
 #    ckpt_path: D:\cqy\stableSR\stable-diffusion-2-1-base\v2-1_512-ema-pruned.ckpt
-    ckpt_path: D:\cqy\stableSR\logs\2025-01-26T21-40-00_new_amplitude_128_Tik_CFW\checkpoints\last.ckpt
+    ckpt_path: D:\cqy\stableSR\logs\2025-02-06T14-11-06_new_phase_calibration_CFW\checkpoints\last.ckpt
     monitor: "val/rec_loss"
     embed_dim: 4
     fusion_w: 0.5
     freeze_dec: True
-#    ignore_keys: [
-#    "decoder.fusion_layer_2.encode_enc_1.norm1.weight",
-#    "decoder.fusion_layer_2.encode_enc_1.norm1.bias",
-#    "decoder.fusion_layer_2.encode_enc_1.conv1.weight",
-#    "decoder.fusion_layer_1.encode_enc_1.norm1.weight",
-#    "decoder.fusion_layer_1.encode_enc_1.norm1.bias",
-#    "decoder.fusion_layer_1.encode_enc_1.conv1.weight",
-#    ]
     synthesis_data: False
     lossconfig:
       target: ldm.modules.losses.LPIPSWithDiscriminator
@@ -44,7 +36,7 @@ model:
       dropout: 0.0
 
     image_key: 'gt'
-    test_output_dir: results/0104/amplitude/Tik_128
+    test_output_dir: results/0116/phase/simulation_128
 
 
 data:
@@ -56,19 +48,19 @@ data:
     train:
       target: basicsr.data.single_image_dataset.SingleImageNPDataset
       params:
-        gt_path: ["D:/cqy/stableSR/CFW_data/eval_data/amplitude_128_Tik"]
+        gt_path: ["D:/cqy/stableSR/CFW_data/eval_data/phase_simulation"]
         io_backend:
           type: disk
     validation:
       target: basicsr.data.single_image_dataset.SingleImageNPDataset
       params:
-        gt_path: ["D:/cqy/stableSR/CFW_data/eval_data/amplitude_128_Tik"]
+        gt_path: ["D:/cqy/stableSR/CFW_data/eval_data/phase_simulation"]
         io_backend:
           type: disk
     test:
       target: basicsr.data.single_image_dataset.SingleImageNPDataset
       params:
-        gt_path: ["D:/cqy/stableSR/CFW_data/eval_data/amplitude_128_Tik"]
+        gt_path: ["D:/cqy/stableSR/CFW_data/eval_data/phase_simulation"]
         io_backend:
           type: disk
 
@@ -87,7 +79,7 @@ lightning:
         increase_log_steps: False
         log_first_step: False
         log_on_batch_idx: True
-        log_every_n_epochs: 1
+        log_every_n_epochs: 10
 
 
   trainer:

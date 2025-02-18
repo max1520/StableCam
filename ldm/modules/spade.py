@@ -87,6 +87,51 @@ class SPADE(nn.Module):
         self.mlp_gamma = nn.Conv2d(nhidden, norm_nc, kernel_size=ks, padding=pw)
         self.mlp_beta = nn.Conv2d(nhidden, norm_nc, kernel_size=ks, padding=pw)
 
+    def forward(self, x_dic, segmap_dic, size=None): #x_dic(1,320,64,64), segmad_dic:同strcut
+
+        if size is None:
+            segmap = segmap_dic[str(x_dic.size(-1))]
+            x = x_dic
+        else:
+            x = x_dic[str(size)]
+            segmap = segmap_dic[str(size)]
+
+        # Part 1. generate parameter-free normalized activations
+        normalized = self.param_free_norm(x)
+
+        # Part 2. produce scaling and bias conditioned on semantic map
+        # segmap = F.interpolate(segmap, size=x.size()[2:], mode='nearest')
+        actv = self.mlp_shared(segmap)
+        gamma = self.mlp_gamma(actv)
+        beta = self.mlp_beta(actv)
+
+        # apply scale and bias
+        out = normalized * (1 + gamma) + beta
+
+        return out
+
+class SPADE_zero(nn.Module):
+    def __init__(self, norm_nc, label_nc, config_text='spadeinstance3x3'):
+        super().__init__()
+
+        assert config_text.startswith('spade')
+        parsed = re.search('spade(\D+)(\d)x\d', config_text)
+        param_free_norm_type = str(parsed.group(1))
+        ks = int(parsed.group(2))
+
+        self.param_free_norm = normalization(norm_nc)
+
+        # The dimension of the intermediate embedding space. Yes, hardcoded.
+        nhidden = 128
+
+        pw = ks // 2
+        self.mlp_shared = nn.Sequential(
+            nn.Conv2d(label_nc, nhidden, kernel_size=ks, padding=pw),
+            nn.ReLU()
+        )
+        self.mlp_gamma = nn.Conv2d(nhidden, norm_nc, kernel_size=ks, padding=pw)
+        self.mlp_beta = nn.Conv2d(nhidden, norm_nc, kernel_size=ks, padding=pw)
+
     def forward(self, x_dic, segmap_dic, size=None):
 
         if size is None:
@@ -104,6 +149,8 @@ class SPADE(nn.Module):
         actv = self.mlp_shared(segmap)
         gamma = self.mlp_gamma(actv)
         beta = self.mlp_beta(actv)
+        gamma = torch.zeros_like(gamma)  # Force gamma to be 0
+        beta = torch.zeros_like(beta)  # Force beta to be 0
 
         # apply scale and bias
         out = normalized * (1 + gamma) + beta

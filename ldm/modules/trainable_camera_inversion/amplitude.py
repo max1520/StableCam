@@ -64,6 +64,8 @@ class TrainableCameraInversion(nn.Module):
         if self.scale != 1:
             # 使用双立方插值将尺寸调整到 (512, 512)
             measure = F.interpolate(measure_expanded, size=(512, 512), mode='bicubic', align_corners=False)
+        else:
+            measure = measure_expanded
 
         # 应用 ReLU 激活
         measure = F.relu(measure)

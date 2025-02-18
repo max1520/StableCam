@@ -34,6 +34,7 @@ model:
       dropout: 0.0
 
     image_key: 'gt'
+    test_output_dir: results/1217/StableCam/Tik_512
 
 
 data:
@@ -45,7 +46,7 @@ data:
     train:
       target: basicsr.data.single_image_dataset.SingleImageNPDataset
       params:
-        gt_path: ['D:/cqy/stableSR/CFW_data/eval_data/amplitude_512_Tik/']
+        gt_path: ['D:/cqy/stableSR/CFW_data/training_data/amplitude_512_Tik/']
         io_backend:
           type: disk
     validation:

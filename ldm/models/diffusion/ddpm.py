@@ -43,6 +43,7 @@ import lpips
 import scipy.io as sio
 from skimage.metrics import structural_similarity as ssim
 from skimage.metrics import peak_signal_noise_ratio as psnr
+from ldm.modules.diffusionmodules.openaimodel import cal_fea_cossim
 
 __conditioning_keys__ = {'concat': 'c_concat',
                          'crossattn': 'c_crossattn',
@@ -3646,10 +3647,10 @@ if __name__ == '__main__':
     to_pil = transforms.ToPILImage()
     image = to_pil(y)
     save_path = r"D:\cqy\flat_data\0104\eval\image_0104_128.png"
-    image.save(save_path)
+    # image.save(save_path)
 
-    # loss = model.shared_step(batch)
-    # print(loss)
+    loss = model.shared_step(batch)
+    print(loss)
 
     # metric = model.log_metrics(batch, N=2, sample=True)
 

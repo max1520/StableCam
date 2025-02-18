@@ -498,4 +498,5 @@ if __name__ == "__main__":
 
     # Run testing
     if not opt.no_test:
+        print(f"all images are in {config.model.params.test_output_dir}")
         trainer.test(model, data)

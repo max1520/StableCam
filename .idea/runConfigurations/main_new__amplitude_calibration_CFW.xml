@@ -14,7 +14,7 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
-    <option name="PARAMETERS" value="--train -b configs/new/autoencoder/autoencoder_paired_amplitude_128_calibration.yaml --gpus 0, --name amplitude_128_calibration_CFW --scale_lr False" />
+    <option name="PARAMETERS" value="--train -b configs/new/autoencoder/autoencoder_paired_amplitude_128_calibration.yaml --gpus 1, --resume D:\cqy\stableSR\logs\2025-01-28T01-25-34_amplitude_128_calibration_CFW\checkpoints\last.ckpt --scale_lr False" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

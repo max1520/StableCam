@@ -331,6 +331,8 @@ def main():
     os.makedirs(gt_path, exist_ok=True)
     latent_path = os.path.join(outpath, "latents")
     os.makedirs(latent_path, exist_ok=True)
+    intermediatt_path = os.path.join(outpath, "intermediates")
+    os.makedirs(intermediatt_path, exist_ok=True)
 
     base_i = opt.base_i
 
@@ -399,13 +401,31 @@ def main():
                         x_T = model_ori.q_sample(x_start=init_latent, t=t, noise=noise)
                         x_T = None  #此时输入为高斯随机噪声
 
-                        samples, _ = model.sample(cond=semantic_c, struct_cond=init_latent, batch_size=init_image.size(0), timesteps=opt.ddpm_steps, time_replace=opt.ddpm_steps, x_T=x_T, return_intermediates=True, adain_fea=None)
+                        samples, intermediates = model.sample(cond=semantic_c, struct_cond=init_latent, batch_size=init_image.size(0), timesteps=opt.ddpm_steps, time_replace=opt.ddpm_steps, x_T=x_T, return_intermediates=True, adain_fea=None)
 
                         x_samples = model.decode_first_stage(samples)
                         x_samples = torch.clamp((x_samples + 1.0) / 2.0, min=0.0, max=1.0)
+                        print(x_samples.shape)
 
                         if not opt.skip_save:
                             for i in range(init_image.size(0)):
+
+                                # 保存每个 intermediate
+                                base_filename = os.path.splitext(os.path.basename(lq_paths[i]))[0]  # 基于 lq_path 提取文件名
+                                for idx, intermediate in enumerate(intermediates):
+
+                                    x_intermediate = model.decode_first_stage(intermediate)
+                                    x_intermediate = torch.clamp((x_intermediate + 1.0) / 2.0, min=0.0, max=1.0)
+
+                                    intermediate_sample = x_intermediate[i].cpu().numpy()
+                                    intermediate_sample = 255. * rearrange(intermediate_sample, 'c h w -> h w c')  # 转换为 (h, w, c) 形状
+                                    intermediate_sample = intermediate_sample.astype(np.uint8)
+                                    # 保存每个 intermediate 的图像
+                                    intermediate_filename = os.path.join(intermediatt_path,
+                                                                         f"{base_filename}_intermediate_{idx}.png")
+                                    Image.fromarray(intermediate_sample).save(intermediate_filename)
+                                    total_num += 1
+
                                 if torch.isnan(x_samples[i]).any():
                                     pass
                                 else:
@@ -430,6 +450,7 @@ def main():
                                     np.save(os.path.join(latent_path, f"{base_filename}.npy"), x_latent)
 
                                     total_num += 1
+
                     # Number of images to generate each time
                     if total_num > 5000:
                         break
