@@ -2014,6 +2014,20 @@ class LatentDiffusionSRTextWT(DDPM):
         if self.is_trainable_camera_inversion:
             # Ensure this step can track gradients
             im_lq = self.TrainableCameraInversion_stage_model(im_lq)  # Allow gradients here
+            #
+            # import os
+            # from scipy.io import savemat
+            #
+            # # 保存 PhiL 和 PhiR 为 .mat 文件
+            # out_dir = r'D:\cqy\flat_data\0104\initial_matrix\fine_random_128'
+            # os.makedirs(out_dir, exist_ok=True)
+            #
+            # PhiL = self.TrainableCameraInversion_stage_model.PhiL.detach().cpu().numpy()
+            # PhiR = self.TrainableCameraInversion_stage_model.PhiR.detach().cpu().numpy()
+            #
+            # savemat(os.path.join(out_dir, 'Phi_rec_left.mat'), {'Phi_rec_left': PhiL})
+            # savemat(os.path.join(out_dir, 'Phi_rec_right.mat'), {'Phi_rec_right': PhiR})
+
 
         # Optionally resize lq to match gt size
         if resize_lq:

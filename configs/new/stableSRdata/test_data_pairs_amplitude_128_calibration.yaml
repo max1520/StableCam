@@ -128,7 +128,7 @@ test_data:
       target: basicsr.data.realesrgan_dataset.RealESRGANPairedDataset
       params:
         dataroot_gt: 'D:/cqy/flat_data/0104/eval/label_512'
-        dataroot_lq: 'D:/cqy/flat_data/0104/eval//measure_resize'
+        dataroot_lq: 'D:/cqy/flat_data/0104/eval/measure_resize'
         num_face: 2000
         crop_size: 512
         mul_num: 10
